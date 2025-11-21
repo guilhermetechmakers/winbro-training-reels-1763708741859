@@ -249,3 +249,16 @@ export const cookieApi = {
   getCookieCategories: (): Promise<import("@/types").CookieCategory[]> =>
     api.get<import("@/types").CookieCategory[]>('/cookies/categories'),
 };
+
+// Error Report API functions
+export const errorReportApi = {
+  submitErrorReport: (data: {
+    request_id: string;
+    user_email?: string;
+    user_name?: string;
+    error_description: string;
+    user_agent?: string;
+    url?: string;
+  }): Promise<import("@/types").ErrorReport> =>
+    api.post<import("@/types").ErrorReport>('/errors/report', data),
+};

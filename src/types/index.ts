@@ -401,3 +401,19 @@ export interface CookieCategory {
   description: string;
   required: boolean;
 }
+
+// Error Report types
+export interface ErrorReport {
+  id: string;
+  request_id: string;
+  user_id?: string;
+  user_email?: string;
+  user_name?: string;
+  error_description: string;
+  user_agent?: string;
+  url?: string;
+  timestamp: string;
+  status: 'pending' | 'reviewed' | 'resolved';
+  created_at: string;
+  updated_at: string;
+}
