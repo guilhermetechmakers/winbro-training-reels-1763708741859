@@ -1225,6 +1225,168 @@ export const adminApi = {
   },
 };
 
+// Security & Compliance API functions
+export const securityApi = {
+  // Get security dashboard
+  getSecurityDashboard: (): Promise<import("@/types").SecurityDashboard> =>
+    api.get<import("@/types").SecurityDashboard>('/security/dashboard'),
+
+  // Tenant Management
+  getTenant: (): Promise<import("@/types").Tenant> =>
+    api.get<import("@/types").Tenant>('/security/tenant'),
+  updateTenant: (data: { tenant_name?: string; admin_contact?: string }): Promise<import("@/types").Tenant> =>
+    api.put<import("@/types").Tenant>('/security/tenant', data),
+
+  // Encryption Management
+  getEncryptionKeys: (): Promise<import("@/types").EncryptionKey[]> =>
+    api.get<import("@/types").EncryptionKey[]>('/security/encryption/keys'),
+  getEncryptionKey: (keyId: string): Promise<import("@/types").EncryptionKey> =>
+    api.get<import("@/types").EncryptionKey>(`/security/encryption/keys/${keyId}`),
+  rotateEncryptionKey: (keyId: string): Promise<import("@/types").EncryptionKey> =>
+    api.post<import("@/types").EncryptionKey>(`/security/encryption/keys/${keyId}/rotate`, {}),
+
+  // Audit Logs
+  getAuditLogs: (filters?: {
+    action_type?: string;
+    severity?: string;
+    start_date?: string;
+    end_date?: string;
+    limit?: number;
+  }): Promise<import("@/types").SecurityAuditLog[]> => {
+    const params = new URLSearchParams();
+    if (filters?.action_type) params.append('action_type', filters.action_type);
+    if (filters?.severity) params.append('severity', filters.severity);
+    if (filters?.start_date) params.append('start_date', filters.start_date);
+    if (filters?.end_date) params.append('end_date', filters.end_date);
+    if (filters?.limit) params.append('limit', filters.limit.toString());
+    const query = params.toString();
+    return api.get<import("@/types").SecurityAuditLog[]>(`/security/audit-logs${query ? `?${query}` : ''}`);
+  },
+  getAuditLog: (logId: string): Promise<import("@/types").SecurityAuditLog> =>
+    api.get<import("@/types").SecurityAuditLog>(`/security/audit-logs/${logId}`),
+  exportAuditLogs: async (filters?: {
+    action_type?: string;
+    severity?: string;
+    start_date?: string;
+    end_date?: string;
+    format?: 'csv' | 'json';
+  }) => {
+    const params = new URLSearchParams();
+    if (filters?.action_type) params.append('action_type', filters.action_type);
+    if (filters?.severity) params.append('severity', filters.severity);
+    if (filters?.start_date) params.append('start_date', filters.start_date);
+    if (filters?.end_date) params.append('end_date', filters.end_date);
+    if (filters?.format) params.append('format', filters.format || 'csv');
+    const query = params.toString();
+    
+    const url = `${import.meta.env.VITE_API_URL || 'http://localhost:3000/api'}/security/audit-logs/export?${query}`;
+    const token = localStorage.getItem('auth_token');
+    
+    const response = await fetch(url, {
+      headers: {
+        Authorization: token ? `Bearer ${token}` : '',
+      },
+    });
+    
+    if (!response.ok) throw new Error('Failed to export audit logs');
+    const blob = await response.blob();
+    const downloadUrl = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = downloadUrl;
+    a.download = `audit-logs-${new Date().toISOString()}.${filters?.format || 'csv'}`;
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(downloadUrl);
+    document.body.removeChild(a);
+  },
+
+  // Compliance Requests
+  getComplianceRequests: (filters?: {
+    type?: 'export' | 'delete';
+    status?: string;
+  }): Promise<import("@/types").ComplianceRequest[]> => {
+    const params = new URLSearchParams();
+    if (filters?.type) params.append('type', filters.type);
+    if (filters?.status) params.append('status', filters.status);
+    const query = params.toString();
+    return api.get<import("@/types").ComplianceRequest[]>(`/security/compliance/requests${query ? `?${query}` : ''}`);
+  },
+  getComplianceRequest: (requestId: string): Promise<import("@/types").ComplianceRequest> =>
+    api.get<import("@/types").ComplianceRequest>(`/security/compliance/requests/${requestId}`),
+  createComplianceRequest: (data: {
+    type: 'export' | 'delete';
+    data_range?: { start_date: string; end_date: string };
+    format?: 'json' | 'csv' | 'pdf';
+  }): Promise<import("@/types").ComplianceRequest> =>
+    api.post<import("@/types").ComplianceRequest>('/security/compliance/requests', data),
+  downloadComplianceExport: async (requestId: string) => {
+    const url = `${import.meta.env.VITE_API_URL || 'http://localhost:3000/api'}/security/compliance/requests/${requestId}/download`;
+    const token = localStorage.getItem('auth_token');
+    const response = await fetch(url, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    if (!response.ok) throw new Error('Failed to download export');
+    const blob = await response.blob();
+    const downloadUrl = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = downloadUrl;
+    a.download = `data-export-${requestId}.zip`;
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(downloadUrl);
+    document.body.removeChild(a);
+  },
+
+  // SIEM Integration
+  getSIEMIntegrations: (): Promise<import("@/types").SIEMIntegration[]> =>
+    api.get<import("@/types").SIEMIntegration[]>('/security/siem/integrations'),
+  getSIEMIntegration: (integrationId: string): Promise<import("@/types").SIEMIntegration> =>
+    api.get<import("@/types").SIEMIntegration>(`/security/siem/integrations/${integrationId}`),
+  createSIEMIntegration: (data: {
+    siem_type: 'splunk' | 'datadog' | 'sentry' | 'custom';
+    endpoint_url: string;
+    api_key?: string;
+  }): Promise<import("@/types").SIEMIntegration> =>
+    api.post<import("@/types").SIEMIntegration>('/security/siem/integrations', data),
+  updateSIEMIntegration: (integrationId: string, data: {
+    endpoint_url?: string;
+    api_key?: string;
+    is_active?: boolean;
+  }): Promise<import("@/types").SIEMIntegration> =>
+    api.put<import("@/types").SIEMIntegration>(`/security/siem/integrations/${integrationId}`, data),
+  deleteSIEMIntegration: (integrationId: string): Promise<{ message: string }> =>
+    api.delete<{ message: string }>(`/security/siem/integrations/${integrationId}`),
+  testSIEMConnection: (integrationId: string): Promise<{ connected: boolean; message: string }> =>
+    api.post<{ connected: boolean; message: string }>(`/security/siem/integrations/${integrationId}/test`, {}),
+
+  // Penetration Testing Reports
+  getPenetrationTestReports: (): Promise<import("@/types").PenetrationTestReport[]> =>
+    api.get<import("@/types").PenetrationTestReport[]>('/security/penetration-tests'),
+  getPenetrationTestReport: (reportId: string): Promise<import("@/types").PenetrationTestReport> =>
+    api.get<import("@/types").PenetrationTestReport>(`/security/penetration-tests/${reportId}`),
+  downloadPenetrationTestReport: async (reportId: string) => {
+    const url = `${import.meta.env.VITE_API_URL || 'http://localhost:3000/api'}/security/penetration-tests/${reportId}/download`;
+    const token = localStorage.getItem('auth_token');
+    const response = await fetch(url, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    if (!response.ok) throw new Error('Failed to download report');
+    const blob = await response.blob();
+    const downloadUrl = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = downloadUrl;
+    a.download = `penetration-test-${reportId}.pdf`;
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(downloadUrl);
+    document.body.removeChild(a);
+  },
+};
+
 // Analytics & Reporting API functions
 export const analyticsApi = {
   // Get analytics dashboard

@@ -1208,3 +1208,107 @@ export interface CustomReportBuilder {
   chart_type?: 'line' | 'bar' | 'pie' | 'area';
   group_by?: 'day' | 'week' | 'month' | 'course' | 'reel' | 'user';
 }
+
+// Security & Compliance types
+export interface Tenant {
+  tenant_id: string;
+  tenant_name: string;
+  admin_contact: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface EncryptionKey {
+  key_id: string;
+  tenant_id: string;
+  key_type: 'data_encryption' | 'transit_encryption' | 'backup_encryption';
+  status: 'active' | 'rotated' | 'deprecated';
+  created_at: string;
+  rotated_at?: string;
+  expires_at?: string;
+}
+
+export interface SecurityAuditLog {
+  log_id: string;
+  tenant_id: string;
+  user_id: string;
+  action: string;
+  action_type: 'access' | 'modification' | 'deletion' | 'authentication' | 'authorization' | 'encryption' | 'compliance';
+  severity: 'low' | 'medium' | 'high' | 'critical';
+  ip_address?: string;
+  user_agent?: string;
+  resource_type?: string;
+  resource_id?: string;
+  details?: Record<string, unknown>;
+  timestamp: string;
+}
+
+export interface ComplianceRequest {
+  request_id: string;
+  tenant_id: string;
+  user_id: string;
+  type: 'export' | 'delete';
+  status: 'pending' | 'in_progress' | 'completed' | 'rejected' | 'failed';
+  requested_at: string;
+  processed_at?: string;
+  data_range?: {
+    start_date: string;
+    end_date: string;
+  };
+  format?: 'json' | 'csv' | 'pdf';
+  file_url?: string;
+  file_size?: number;
+  rejection_reason?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface SecurityDashboard {
+  tenant_info: Tenant;
+  encryption_status: {
+    data_at_rest: 'enabled' | 'disabled';
+    data_in_transit: 'enabled' | 'disabled';
+    active_keys: number;
+    last_rotation?: string;
+  };
+  recent_alerts: SecurityAuditLog[];
+  compliance_status: {
+    gdpr_compliant: boolean;
+    ccpa_compliant: boolean;
+    last_audit?: string;
+  };
+  access_controls: {
+    rls_enabled: boolean;
+    acl_enforced: boolean;
+  };
+}
+
+export interface SIEMIntegration {
+  integration_id: string;
+  tenant_id: string;
+  siem_type: 'splunk' | 'datadog' | 'sentry' | 'custom';
+  endpoint_url: string;
+  api_key?: string;
+  is_active: boolean;
+  last_sync?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PenetrationTestReport {
+  report_id: string;
+  tenant_id: string;
+  test_date: string;
+  status: 'scheduled' | 'in_progress' | 'completed' | 'failed';
+  vulnerabilities: {
+    severity: 'low' | 'medium' | 'high' | 'critical';
+    title: string;
+    description: string;
+    remediation: string;
+    status: 'open' | 'in_progress' | 'resolved';
+  }[];
+  overall_score?: number;
+  recommendations: string[];
+  created_at: string;
+  updated_at: string;
+}

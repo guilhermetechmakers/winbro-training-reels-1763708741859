@@ -10,7 +10,8 @@ import {
   Shield,
   Receipt,
   Monitor,
-  CreditCard
+  CreditCard,
+  Lock
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -23,6 +24,7 @@ const navigation = [
   { name: "Subscriptions", href: "/subscriptions", icon: CreditCard },
   { name: "Transactions", href: "/transactions", icon: Receipt },
   { name: "Sessions", href: "/sessions", icon: Monitor },
+  { name: "Security", href: "/security", icon: Lock },
   { name: "Settings", href: "/settings", icon: Settings },
 ];
 
