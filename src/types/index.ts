@@ -994,3 +994,95 @@ export interface NotificationCount {
   unread: number;
   total: number;
 }
+
+// Admin Tools & Content Moderation types
+export interface ModerationQueueItem {
+  id: string;
+  reel_id: string;
+  creator_id: string;
+  creator_name: string;
+  creator_email: string;
+  title: string;
+  description: string;
+  thumbnail_url?: string;
+  duration: number;
+  submission_date: string;
+  status: 'pending' | 'approved' | 'rejected' | 'needs_revision';
+  feedback?: string;
+  reviewed_by?: string;
+  reviewed_at?: string;
+  reel?: Reel;
+}
+
+export interface ModerationAction {
+  item_id: string;
+  action: 'approve' | 'reject' | 'request_revision';
+  feedback?: string;
+}
+
+export interface LibraryProvision {
+  id: string;
+  name: string;
+  description?: string;
+  customer_id?: string;
+  assigned_user_groups: string[];
+  reel_ids: string[];
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AdminSupportTicket {
+  id: string;
+  ticket_id: string;
+  user_id: string;
+  user_name: string;
+  user_email: string;
+  issue_type: 'technical' | 'billing' | 'content' | 'account' | 'other';
+  subject: string;
+  message: string;
+  status: 'open' | 'in_progress' | 'resolved' | 'closed';
+  priority: 'low' | 'medium' | 'high' | 'urgent';
+  assigned_to?: string;
+  assigned_to_name?: string;
+  resolution?: string;
+  created_at: string;
+  updated_at: string;
+  resolved_at?: string;
+}
+
+export interface AuditLog {
+  id: string;
+  log_id: string;
+  action_type: 'content_approve' | 'content_reject' | 'user_create' | 'user_update' | 'user_deactivate' | 'library_create' | 'library_update' | 'library_delete' | 'ticket_assign' | 'ticket_resolve' | 'subscription_update' | 'system_config';
+  admin_id: string;
+  admin_name: string;
+  target_type: 'content' | 'user' | 'library' | 'ticket' | 'subscription' | 'system';
+  target_id: string;
+  description: string;
+  metadata?: Record<string, unknown>;
+  ip_address?: string;
+  user_agent?: string;
+  timestamp: string;
+  created_at: string;
+}
+
+export interface AdminKPIs {
+  active_customers: number;
+  videos_uploaded: number;
+  weekly_views: number;
+  pending_moderations: number;
+  open_tickets: number;
+  total_users: number;
+  active_subscriptions: number;
+}
+
+export interface AdminDashboardStats {
+  kpis: AdminKPIs;
+  moderation_queue_count: number;
+  recent_activity: AuditLog[];
+  system_health: {
+    status: 'healthy' | 'degraded' | 'down';
+    message?: string;
+  };
+}

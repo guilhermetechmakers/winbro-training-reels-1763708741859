@@ -20,6 +20,9 @@ import SubscriptionPlansPage from "@/pages/SubscriptionPlansPage";
 import AdminDashboard from "@/pages/AdminDashboard";
 import AdminUserManagement from "@/pages/AdminUserManagement";
 import AdminSubscriptionManagement from "@/pages/AdminSubscriptionManagement";
+import AdminContentModeration from "@/pages/AdminContentModeration";
+import AdminLibraryProvisioning from "@/pages/AdminLibraryProvisioning";
+import AdminSupportTickets from "@/pages/AdminSupportTickets";
 import AnalyticsPage from "@/pages/AnalyticsPage";
 import SettingsPage from "@/pages/SettingsPage";
 import HelpPage from "@/pages/HelpPage";
@@ -172,6 +175,30 @@ export default function App() {
               element={
                 <ProtectedRoute allowedRoles={['admin']}>
                   <AdminSubscriptionManagement />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/admin/moderation" 
+              element={
+                <ProtectedRoute allowedRoles={['admin']}>
+                  <AdminContentModeration />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/admin/libraries" 
+              element={
+                <ProtectedRoute allowedRoles={['admin']}>
+                  <AdminLibraryProvisioning />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/admin/tickets" 
+              element={
+                <ProtectedRoute allowedRoles={['admin']}>
+                  <AdminSupportTickets />
                 </ProtectedRoute>
               } 
             />

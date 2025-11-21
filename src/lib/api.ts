@@ -1078,3 +1078,149 @@ export const notificationsApi = {
     return api.get<import("@/types").EmailLog[]>(`/notifications/email-logs${query ? `?${query}` : ''}`);
   },
 };
+
+// Admin Tools & Content Moderation API functions
+export const adminApi = {
+  // Dashboard stats
+  getDashboardStats: (): Promise<import("@/types").AdminDashboardStats> =>
+    api.get<import("@/types").AdminDashboardStats>('/admin/dashboard/stats'),
+
+  // Moderation Queue
+  getModerationQueue: (filters?: { status?: string; limit?: number }): Promise<import("@/types").ModerationQueueItem[]> => {
+    const params = new URLSearchParams();
+    if (filters?.status) params.append('status', filters.status);
+    if (filters?.limit) params.append('limit', filters.limit.toString());
+    const query = params.toString();
+    return api.get<import("@/types").ModerationQueueItem[]>(`/admin/moderation/queue${query ? `?${query}` : ''}`);
+  },
+  getModerationItem: (id: string): Promise<import("@/types").ModerationQueueItem> =>
+    api.get<import("@/types").ModerationQueueItem>(`/admin/moderation/queue/${id}`),
+  moderateContent: (action: import("@/types").ModerationAction): Promise<import("@/types").ModerationQueueItem> =>
+    api.post<import("@/types").ModerationQueueItem>('/admin/moderation/action', action),
+  batchModerate: (actions: import("@/types").ModerationAction[]): Promise<import("@/types").ModerationQueueItem[]> =>
+    api.post<import("@/types").ModerationQueueItem[]>('/admin/moderation/batch', { actions }),
+
+  // Library Provisioning
+  getLibraries: (filters?: { customer_id?: string; search?: string }): Promise<import("@/types").LibraryProvision[]> => {
+    const params = new URLSearchParams();
+    if (filters?.customer_id) params.append('customer_id', filters.customer_id);
+    if (filters?.search) params.append('search', filters.search);
+    const query = params.toString();
+    return api.get<import("@/types").LibraryProvision[]>(`/admin/libraries${query ? `?${query}` : ''}`);
+  },
+  getLibrary: (id: string): Promise<import("@/types").LibraryProvision> =>
+    api.get<import("@/types").LibraryProvision>(`/admin/libraries/${id}`),
+  createLibrary: (data: Omit<import("@/types").LibraryProvision, 'id' | 'created_by' | 'created_at' | 'updated_at'>): Promise<import("@/types").LibraryProvision> =>
+    api.post<import("@/types").LibraryProvision>('/admin/libraries', data),
+  updateLibrary: (id: string, data: Partial<Omit<import("@/types").LibraryProvision, 'id' | 'created_by' | 'created_at' | 'updated_at'>>): Promise<import("@/types").LibraryProvision> =>
+    api.put<import("@/types").LibraryProvision>(`/admin/libraries/${id}`, data),
+  deleteLibrary: (id: string): Promise<{ message: string }> =>
+    api.delete<{ message: string }>(`/admin/libraries/${id}`),
+  assignLibraryToGroups: (id: string, userGroupIds: string[]): Promise<import("@/types").LibraryProvision> =>
+    api.post<import("@/types").LibraryProvision>(`/admin/libraries/${id}/assign`, { user_group_ids: userGroupIds }),
+
+  // Support Tickets
+  getSupportTickets: (filters?: { status?: string; priority?: string; assigned_to?: string; issue_type?: string }): Promise<import("@/types").AdminSupportTicket[]> => {
+    const params = new URLSearchParams();
+    if (filters?.status) params.append('status', filters.status);
+    if (filters?.priority) params.append('priority', filters.priority);
+    if (filters?.assigned_to) params.append('assigned_to', filters.assigned_to);
+    if (filters?.issue_type) params.append('issue_type', filters.issue_type);
+    const query = params.toString();
+    return api.get<import("@/types").AdminSupportTicket[]>(`/admin/support/tickets${query ? `?${query}` : ''}`);
+  },
+  getSupportTicket: (id: string): Promise<import("@/types").AdminSupportTicket> =>
+    api.get<import("@/types").AdminSupportTicket>(`/admin/support/tickets/${id}`),
+  assignTicket: (id: string, adminId: string): Promise<import("@/types").AdminSupportTicket> =>
+    api.post<import("@/types").AdminSupportTicket>(`/admin/support/tickets/${id}/assign`, { admin_id: adminId }),
+  updateTicketStatus: (id: string, status: string, resolution?: string): Promise<import("@/types").AdminSupportTicket> =>
+    api.patch<import("@/types").AdminSupportTicket>(`/admin/support/tickets/${id}/status`, { status, resolution }),
+  resolveTicket: (id: string, resolution: string): Promise<import("@/types").AdminSupportTicket> =>
+    api.post<import("@/types").AdminSupportTicket>(`/admin/support/tickets/${id}/resolve`, { resolution }),
+
+  // User Management (Admin)
+  getUsersAdmin: (filters?: { role?: string; search?: string; status?: string }): Promise<import("@/types").User[]> => {
+    const params = new URLSearchParams();
+    if (filters?.role) params.append('role', filters.role);
+    if (filters?.search) params.append('search', filters.search);
+    if (filters?.status) params.append('status', filters.status);
+    const query = params.toString();
+    return api.get<import("@/types").User[]>(`/admin/users${query ? `?${query}` : ''}`);
+  },
+  getUserAdmin: (id: string): Promise<import("@/types").User> =>
+    api.get<import("@/types").User>(`/admin/users/${id}`),
+  updateUserAdmin: (id: string, data: { role?: string; status?: string; full_name?: string }): Promise<import("@/types").User> =>
+    api.patch<import("@/types").User>(`/admin/users/${id}`, data),
+  deactivateUser: (id: string, reason?: string): Promise<import("@/types").User> =>
+    api.post<import("@/types").User>(`/admin/users/${id}/deactivate`, { reason }),
+  activateUser: (id: string): Promise<import("@/types").User> =>
+    api.post<import("@/types").User>(`/admin/users/${id}/activate`, {}),
+  resetUserPassword: (id: string): Promise<{ message: string; temp_password?: string }> =>
+    api.post<{ message: string; temp_password?: string }>(`/admin/users/${id}/reset-password`, {}),
+  inviteUser: (data: { email: string; full_name: string; role: string; company?: string }): Promise<{ message: string; user_id: string }> =>
+    api.post<{ message: string; user_id: string }>('/admin/users/invite', data),
+  bulkImportUsers: (file: File): Promise<{ message: string; imported: number; failed: number; errors?: string[] }> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    const url = `${import.meta.env.VITE_API_URL || 'http://localhost:3000/api'}/admin/users/bulk-import`;
+    const token = localStorage.getItem('auth_token');
+    
+    return fetch(url, {
+      method: 'POST',
+      headers: {
+        Authorization: token ? `Bearer ${token}` : '',
+      },
+      body: formData,
+    }).then(async (response) => {
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ message: `API Error: ${response.status}` }));
+        throw new Error(error.message || `API Error: ${response.status}`);
+      }
+      return response.json();
+    });
+  },
+
+  // Audit Logs
+  getAuditLogs: (filters?: { action_type?: string; admin_id?: string; target_type?: string; limit?: number; start_date?: string; end_date?: string }): Promise<import("@/types").AuditLog[]> => {
+    const params = new URLSearchParams();
+    if (filters?.action_type) params.append('action_type', filters.action_type);
+    if (filters?.admin_id) params.append('admin_id', filters.admin_id);
+    if (filters?.target_type) params.append('target_type', filters.target_type);
+    if (filters?.limit) params.append('limit', filters.limit.toString());
+    if (filters?.start_date) params.append('start_date', filters.start_date);
+    if (filters?.end_date) params.append('end_date', filters.end_date);
+    const query = params.toString();
+    return api.get<import("@/types").AuditLog[]>(`/admin/audit-logs${query ? `?${query}` : ''}`);
+  },
+  exportAuditLogs: async (filters?: { action_type?: string; admin_id?: string; target_type?: string; start_date?: string; end_date?: string; format?: 'csv' | 'pdf' }) => {
+    const params = new URLSearchParams();
+    if (filters?.action_type) params.append('action_type', filters.action_type);
+    if (filters?.admin_id) params.append('admin_id', filters.admin_id);
+    if (filters?.target_type) params.append('target_type', filters.target_type);
+    if (filters?.start_date) params.append('start_date', filters.start_date);
+    if (filters?.end_date) params.append('end_date', filters.end_date);
+    if (filters?.format) params.append('format', filters.format || 'csv');
+    const query = params.toString();
+    
+    const url = `${import.meta.env.VITE_API_URL || 'http://localhost:3000/api'}/admin/audit-logs/export?${query}`;
+    const token = localStorage.getItem('auth_token');
+    
+    const response = await fetch(url, {
+      headers: {
+        Authorization: token ? `Bearer ${token}` : '',
+      },
+    });
+    
+    if (!response.ok) throw new Error('Failed to export audit logs');
+    const blob = await response.blob();
+    const downloadUrl = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = downloadUrl;
+    a.download = `audit-logs-${new Date().toISOString()}.${filters?.format || 'csv'}`;
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(downloadUrl);
+    document.body.removeChild(a);
+  },
+};
