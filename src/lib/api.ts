@@ -721,6 +721,207 @@ export const videoAnalyticsApi = {
   },
 };
 
+// Course Builder & Quiz Engine API functions
+export const coursesApi = {
+  // Get all courses
+  getCourses: (filters?: { status?: string; search?: string }): Promise<import("@/types").Course[]> => {
+    const params = new URLSearchParams();
+    if (filters?.status) params.append('status', filters.status);
+    if (filters?.search) params.append('search', filters.search);
+    const query = params.toString();
+    return api.get<import("@/types").Course[]>(`/courses${query ? `?${query}` : ''}`);
+  },
+
+  // Get single course
+  getCourse: (id: string): Promise<import("@/types").Course> => {
+    return api.get<import("@/types").Course>(`/courses/${id}`);
+  },
+
+  // Create course
+  createCourse: (data: Omit<import("@/types").Course, 'id' | 'created_at' | 'updated_at'>): Promise<import("@/types").Course> => {
+    return api.post<import("@/types").Course>('/courses', data);
+  },
+
+  // Update course
+  updateCourse: (id: string, data: Partial<Omit<import("@/types").Course, 'id' | 'created_at' | 'updated_at'>>): Promise<import("@/types").Course> => {
+    return api.put<import("@/types").Course>(`/courses/${id}`, data);
+  },
+
+  // Delete course
+  deleteCourse: (id: string): Promise<{ message: string }> => {
+    return api.delete<{ message: string }>(`/courses/${id}`);
+  },
+
+  // Publish course
+  publishCourse: (id: string): Promise<import("@/types").Course> => {
+    return api.post<import("@/types").Course>(`/courses/${id}/publish`, {});
+  },
+
+  // Archive course
+  archiveCourse: (id: string): Promise<import("@/types").Course> => {
+    return api.post<import("@/types").Course>(`/courses/${id}/archive`, {});
+  },
+
+  // Add module to course
+  addModule: (courseId: string, data: { reel_id: string; order: number }): Promise<import("@/types").CourseModule> => {
+    return api.post<import("@/types").CourseModule>(`/courses/${courseId}/modules`, data);
+  },
+
+  // Update module order
+  updateModuleOrder: (courseId: string, moduleOrders: { module_id: string; order: number }[]): Promise<import("@/types").Course> => {
+    return api.patch<import("@/types").Course>(`/courses/${courseId}/modules/order`, { module_orders: moduleOrders });
+  },
+
+  // Remove module from course
+  removeModule: (courseId: string, moduleId: string): Promise<{ message: string }> => {
+    return api.delete<{ message: string }>(`/courses/${courseId}/modules/${moduleId}`);
+  },
+};
+
+// Quiz API functions
+export const quizzesApi = {
+  // Get quiz for module
+  getQuiz: (moduleId: string): Promise<import("@/types").Quiz> => {
+    return api.get<import("@/types").Quiz>(`/modules/${moduleId}/quiz`);
+  },
+
+  // Create or update quiz
+  upsertQuiz: (moduleId: string, data: Omit<import("@/types").Quiz, 'id' | 'module_id'>): Promise<import("@/types").Quiz> => {
+    return api.post<import("@/types").Quiz>(`/modules/${moduleId}/quiz`, data);
+  },
+
+  // Delete quiz
+  deleteQuiz: (moduleId: string): Promise<{ message: string }> => {
+    return api.delete<{ message: string }>(`/modules/${moduleId}/quiz`);
+  },
+
+  // Start quiz attempt
+  startQuizAttempt: (quizId: string, moduleId: string, courseId: string): Promise<import("@/types").QuizAttempt> => {
+    return api.post<import("@/types").QuizAttempt>('/quizzes/attempts/start', { quiz_id: quizId, module_id: moduleId, course_id: courseId });
+  },
+
+  // Submit quiz attempt
+  submitQuizAttempt: (attemptId: string, answers: import("@/types").QuizAnswer[]): Promise<import("@/types").QuizAttempt> => {
+    return api.post<import("@/types").QuizAttempt>(`/quizzes/attempts/${attemptId}/submit`, { answers });
+  },
+
+  // Get quiz attempt
+  getQuizAttempt: (attemptId: string): Promise<import("@/types").QuizAttempt> => {
+    return api.get<import("@/types").QuizAttempt>(`/quizzes/attempts/${attemptId}`);
+  },
+
+  // Get user's quiz attempts for a course
+  getQuizAttempts: (courseId: string, moduleId?: string): Promise<import("@/types").QuizAttempt[]> => {
+    const params = new URLSearchParams();
+    params.append('course_id', courseId);
+    if (moduleId) params.append('module_id', moduleId);
+    return api.get<import("@/types").QuizAttempt[]>(`/quizzes/attempts?${params.toString()}`);
+  },
+};
+
+// Enrollment API functions
+export const enrollmentsApi = {
+  // Get enrollments
+  getEnrollments: (filters?: { course_id?: string; user_id?: string; status?: string }): Promise<import("@/types").Enrollment[]> => {
+    const params = new URLSearchParams();
+    if (filters?.course_id) params.append('course_id', filters.course_id);
+    if (filters?.user_id) params.append('user_id', filters.user_id);
+    if (filters?.status) params.append('status', filters.status);
+    const query = params.toString();
+    return api.get<import("@/types").Enrollment[]>(`/enrollments${query ? `?${query}` : ''}`);
+  },
+
+  // Get single enrollment
+  getEnrollment: (id: string): Promise<import("@/types").Enrollment> => {
+    return api.get<import("@/types").Enrollment>(`/enrollments/${id}`);
+  },
+
+  // Enroll user in course
+  enrollUser: (courseId: string, userId?: string): Promise<import("@/types").Enrollment> => {
+    return api.post<import("@/types").Enrollment>('/enrollments', { course_id: courseId, user_id: userId });
+  },
+
+  // Update enrollment progress
+  updateProgress: (enrollmentId: string, progress: number): Promise<import("@/types").Enrollment> => {
+    return api.patch<import("@/types").Enrollment>(`/enrollments/${enrollmentId}/progress`, { progress });
+  },
+
+  // Unenroll user
+  unenrollUser: (enrollmentId: string): Promise<{ message: string }> => {
+    return api.delete<{ message: string }>(`/enrollments/${enrollmentId}`);
+  },
+
+  // Bulk enroll users
+  bulkEnroll: (courseId: string, userIds: string[]): Promise<import("@/types").Enrollment[]> => {
+    return api.post<import("@/types").Enrollment[]>('/enrollments/bulk', { course_id: courseId, user_ids: userIds });
+  },
+};
+
+// Users API functions
+export const usersApi = {
+  // Get users (for admin/enrollment purposes)
+  getUsers: (filters?: { role?: string; search?: string }): Promise<import("@/types").User[]> => {
+    const params = new URLSearchParams();
+    if (filters?.role) params.append('role', filters.role);
+    if (filters?.search) params.append('search', filters.search);
+    const query = params.toString();
+    return api.get<import("@/types").User[]>(`/users${query ? `?${query}` : ''}`);
+  },
+
+  // Get single user
+  getUser: (id: string): Promise<import("@/types").User> => {
+    return api.get<import("@/types").User>(`/users/${id}`);
+  },
+};
+
+// Certificate API functions
+export const certificatesApi = {
+  // Get certificates
+  getCertificates: (filters?: { course_id?: string; user_id?: string }): Promise<import("@/types").Certificate[]> => {
+    const params = new URLSearchParams();
+    if (filters?.course_id) params.append('course_id', filters.course_id);
+    if (filters?.user_id) params.append('user_id', filters.user_id);
+    const query = params.toString();
+    return api.get<import("@/types").Certificate[]>(`/certificates${query ? `?${query}` : ''}`);
+  },
+
+  // Get single certificate
+  getCertificate: (id: string): Promise<import("@/types").Certificate> => {
+    return api.get<import("@/types").Certificate>(`/certificates/${id}`);
+  },
+
+  // Generate certificate
+  generateCertificate: (courseId: string, userId?: string): Promise<import("@/types").Certificate> => {
+    return api.post<import("@/types").Certificate>('/certificates/generate', { course_id: courseId, user_id: userId });
+  },
+
+  // Download certificate PDF
+  downloadCertificate: async (certificateId: string) => {
+    const url = `${import.meta.env.VITE_API_URL || 'http://localhost:3000/api'}/certificates/${certificateId}/download`;
+    const token = localStorage.getItem('auth_token');
+    const response = await fetch(url, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    if (!response.ok) throw new Error('Failed to download certificate');
+    const blob = await response.blob();
+    const downloadUrl = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = downloadUrl;
+    a.download = `certificate-${certificateId}.pdf`;
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(downloadUrl);
+    document.body.removeChild(a);
+  },
+
+  // Verify certificate
+  verifyCertificate: (verificationId: string): Promise<import("@/types").Certificate> => {
+    return api.get<import("@/types").Certificate>(`/certificates/verify/${verificationId}`);
+  },
+};
+
 // Structured Metadata & Tagging API functions
 export const metadataApi = {
   // Machine Models

@@ -141,6 +141,50 @@ export interface QuizQuestion {
   explanation?: string;
 }
 
+export interface Enrollment {
+  id: string;
+  course_id: string;
+  user_id: string;
+  enrolled_at: string;
+  progress: number; // 0-100
+  completed_at?: string;
+  status: 'enrolled' | 'in_progress' | 'completed' | 'dropped';
+  course?: Course;
+  user?: User;
+}
+
+export interface QuizAttempt {
+  id: string;
+  quiz_id: string;
+  module_id: string;
+  user_id: string;
+  course_id: string;
+  started_at: string;
+  submitted_at?: string;
+  time_spent?: number; // in seconds
+  answers: QuizAnswer[];
+  score?: number; // percentage
+  passed: boolean;
+  status: 'in_progress' | 'submitted' | 'expired';
+}
+
+export interface QuizAnswer {
+  question_id: string;
+  selected_indices: number[];
+  is_correct?: boolean;
+}
+
+export interface Certificate {
+  id: string;
+  course_id: string;
+  user_id: string;
+  issued_at: string;
+  verification_id: string;
+  pdf_url?: string;
+  course?: Course;
+  user?: User;
+}
+
 export interface Library {
   id: string;
   name: string;
