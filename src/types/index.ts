@@ -917,3 +917,64 @@ export interface OfflineVideoAccess {
   expires_at: string;
   is_valid: boolean;
 }
+
+// Notifications & Email types
+export interface Notification {
+  id: string;
+  user_id: string;
+  type: 'course_invite' | 'content_update' | 'admin_alert' | 'system' | 'course_completed' | 'quiz_result';
+  title: string;
+  message: string;
+  status: 'read' | 'unread';
+  action_url?: string;
+  action_label?: string;
+  metadata?: {
+    course_id?: string;
+    reel_id?: string;
+    quiz_id?: string;
+    [key: string]: unknown;
+  };
+  created_at: string;
+  read_at?: string;
+}
+
+export interface NotificationPreferences {
+  user_id: string;
+  channels: {
+    in_app: boolean;
+    email: boolean;
+  };
+  types: {
+    course_invites: boolean;
+    content_updates: boolean;
+    admin_alerts: boolean;
+    system_notifications: boolean;
+    course_completed: boolean;
+    quiz_results: boolean;
+  };
+  email_frequency: 'instant' | 'digest' | 'daily' | 'weekly';
+  digest_time?: string; // HH:MM format
+  created_at: string;
+  updated_at: string;
+}
+
+export interface EmailLog {
+  id: string;
+  user_id: string;
+  email_type: 'course_invite' | 'verification' | 'password_reset' | 'course_invite' | 'content_update' | 'admin_alert' | 'digest' | 'billing';
+  recipient_email: string;
+  subject: string;
+  status: 'pending' | 'sent' | 'delivered' | 'bounced' | 'failed';
+  sent_at?: string;
+  delivered_at?: string;
+  bounced_at?: string;
+  retry_count: number;
+  error_message?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface NotificationCount {
+  unread: number;
+  total: number;
+}

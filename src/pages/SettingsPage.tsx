@@ -1,6 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SecuritySettings } from "@/components/auth/SecuritySettings";
+import { NotificationSettings } from "@/components/notifications/NotificationSettings";
 import { Shield } from "lucide-react";
 
 export default function SettingsPage() {
@@ -42,7 +43,7 @@ export default function SettingsPage() {
               <p className="text-foreground-secondary">SSO, LMS export, API tokens would be here</p>
             </TabsContent>
             <TabsContent value="notifications" className="mt-6">
-              <p className="text-foreground-secondary">Notification preferences would be here</p>
+              <NotificationSettings />
             </TabsContent>
           </Tabs>
         </CardContent>

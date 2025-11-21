@@ -1,4 +1,4 @@
-import { Bell, LogOut, Settings, Monitor } from "lucide-react";
+import { LogOut, Settings, Monitor } from "lucide-react";
 import { Link } from "react-router-dom";
 import {
   DropdownMenu,
@@ -11,6 +11,7 @@ import {
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { SearchBar } from "@/components/search/SearchBar";
+import { NotificationCenter } from "@/components/notifications/NotificationCenter";
 import { useCurrentUser, useLogout } from "@/hooks/use-auth";
 
 export default function TopNav() {
@@ -35,10 +36,7 @@ export default function TopNav() {
       {/* Right side actions */}
       <div className="flex items-center gap-4">
         {/* Notifications */}
-        <Button variant="ghost" size="icon" className="relative">
-          <Bell className="h-5 w-5" />
-          <span className="absolute top-1 right-1 h-2 w-2 bg-primary rounded-full" />
-        </Button>
+        <NotificationCenter />
 
         {/* Profile dropdown */}
         <DropdownMenu>

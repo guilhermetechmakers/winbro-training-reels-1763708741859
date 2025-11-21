@@ -30,6 +30,7 @@ import SearchResultsPage from "@/pages/SearchResultsPage";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import SessionManagementPage from "@/pages/SessionManagementPage";
+import NotificationSettingsPage from "@/pages/NotificationSettingsPage";
 
 // React Query client with optimal defaults
 const queryClient = new QueryClient({
@@ -169,6 +170,14 @@ export default function App() {
               element={
                 <ProtectedRoute>
                   <SettingsPage />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/settings/notifications" 
+              element={
+                <ProtectedRoute>
+                  <NotificationSettingsPage />
                 </ProtectedRoute>
               } 
             />

@@ -998,3 +998,58 @@ export const metadataApi = {
   }): Promise<import("@/types").MetadataValidationResult> =>
     api.post<import("@/types").MetadataValidationResult>('/metadata/validate', data),
 };
+
+// Notifications & Email API functions
+export const notificationsApi = {
+  // Get notifications
+  getNotifications: (filters?: { status?: 'read' | 'unread'; type?: string; limit?: number }): Promise<import("@/types").Notification[]> => {
+    const params = new URLSearchParams();
+    if (filters?.status) params.append('status', filters.status);
+    if (filters?.type) params.append('type', filters.type);
+    if (filters?.limit) params.append('limit', filters.limit.toString());
+    const query = params.toString();
+    return api.get<import("@/types").Notification[]>(`/notifications${query ? `?${query}` : ''}`);
+  },
+
+  // Get notification count
+  getNotificationCount: (): Promise<import("@/types").NotificationCount> =>
+    api.get<import("@/types").NotificationCount>('/notifications/count'),
+
+  // Get single notification
+  getNotification: (id: string): Promise<import("@/types").Notification> =>
+    api.get<import("@/types").Notification>(`/notifications/${id}`),
+
+  // Mark notification as read
+  markAsRead: (id: string): Promise<import("@/types").Notification> =>
+    api.patch<import("@/types").Notification>(`/notifications/${id}/read`, {}),
+
+  // Mark all notifications as read
+  markAllAsRead: (): Promise<{ message: string }> =>
+    api.post<{ message: string }>('/notifications/read-all', {}),
+
+  // Delete notification
+  deleteNotification: (id: string): Promise<{ message: string }> =>
+    api.delete<{ message: string }>(`/notifications/${id}`),
+
+  // Archive notification
+  archiveNotification: (id: string): Promise<import("@/types").Notification> =>
+    api.post<import("@/types").Notification>(`/notifications/${id}/archive`, {}),
+
+  // Get notification preferences
+  getPreferences: (): Promise<import("@/types").NotificationPreferences> =>
+    api.get<import("@/types").NotificationPreferences>('/notifications/preferences'),
+
+  // Update notification preferences
+  updatePreferences: (data: Partial<import("@/types").NotificationPreferences>): Promise<import("@/types").NotificationPreferences> =>
+    api.put<import("@/types").NotificationPreferences>('/notifications/preferences', data),
+
+  // Get email logs
+  getEmailLogs: (filters?: { status?: string; email_type?: string; limit?: number }): Promise<import("@/types").EmailLog[]> => {
+    const params = new URLSearchParams();
+    if (filters?.status) params.append('status', filters.status);
+    if (filters?.email_type) params.append('email_type', filters.email_type);
+    if (filters?.limit) params.append('limit', filters.limit.toString());
+    const query = params.toString();
+    return api.get<import("@/types").EmailLog[]>(`/notifications/email-logs${query ? `?${query}` : ''}`);
+  },
+};
