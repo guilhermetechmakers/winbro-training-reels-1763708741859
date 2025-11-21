@@ -1224,3 +1224,103 @@ export const adminApi = {
     document.body.removeChild(a);
   },
 };
+
+// Analytics & Reporting API functions
+export const analyticsApi = {
+  // Get analytics dashboard
+  getDashboard: (filters?: { date_range?: { start_date: string; end_date: string }; customer_id?: string }): Promise<import("@/types").AnalyticsDashboard> => {
+    const params = new URLSearchParams();
+    if (filters?.date_range?.start_date) params.append('start_date', filters.date_range.start_date);
+    if (filters?.date_range?.end_date) params.append('end_date', filters.date_range.end_date);
+    if (filters?.customer_id) params.append('customer_id', filters.customer_id);
+    const query = params.toString();
+    return api.get<import("@/types").AnalyticsDashboard>(`/analytics/dashboard${query ? `?${query}` : ''}`);
+  },
+
+  // Get metrics
+  getMetrics: (filters?: { category?: string; date_range?: { start_date: string; end_date: string } }): Promise<import("@/types").Metric[]> => {
+    const params = new URLSearchParams();
+    if (filters?.category) params.append('category', filters.category);
+    if (filters?.date_range?.start_date) params.append('start_date', filters.date_range.start_date);
+    if (filters?.date_range?.end_date) params.append('end_date', filters.date_range.end_date);
+    const query = params.toString();
+    return api.get<import("@/types").Metric[]>(`/analytics/metrics${query ? `?${query}` : ''}`);
+  },
+
+  // Get metric detail
+  getMetricDetail: (metricId: string, filters?: { date_range?: { start_date: string; end_date: string } }): Promise<import("@/types").MetricDetail> => {
+    const params = new URLSearchParams();
+    if (filters?.date_range?.start_date) params.append('start_date', filters.date_range.start_date);
+    if (filters?.date_range?.end_date) params.append('end_date', filters.date_range.end_date);
+    const query = params.toString();
+    return api.get<import("@/types").MetricDetail>(`/analytics/metrics/${metricId}${query ? `?${query}` : ''}`);
+  },
+
+  // Get events
+  getEvents: (filters?: { event_type?: string; date_range?: { start_date: string; end_date: string }; limit?: number }): Promise<import("@/types").AnalyticsEvent[]> => {
+    const params = new URLSearchParams();
+    if (filters?.event_type) params.append('event_type', filters.event_type);
+    if (filters?.date_range?.start_date) params.append('start_date', filters.date_range.start_date);
+    if (filters?.date_range?.end_date) params.append('end_date', filters.date_range.end_date);
+    if (filters?.limit) params.append('limit', filters.limit.toString());
+    const query = params.toString();
+    return api.get<import("@/types").AnalyticsEvent[]>(`/analytics/events${query ? `?${query}` : ''}`);
+  },
+
+  // Get reports
+  getReports: (): Promise<import("@/types").Report[]> => 
+    api.get<import("@/types").Report[]>('/analytics/reports'),
+
+  // Get single report
+  getReport: (id: string): Promise<import("@/types").Report> => 
+    api.get<import("@/types").Report>(`/analytics/reports/${id}`),
+
+  // Create report
+  createReport: (data: Omit<import("@/types").Report, 'id' | 'user_id' | 'created_at' | 'updated_at' | 'last_accessed_at'>): Promise<import("@/types").Report> => 
+    api.post<import("@/types").Report>('/analytics/reports', data),
+
+  // Update report
+  updateReport: (id: string, data: Partial<Omit<import("@/types").Report, 'id' | 'user_id' | 'created_at' | 'updated_at'>>): Promise<import("@/types").Report> => 
+    api.put<import("@/types").Report>(`/analytics/reports/${id}`, data),
+
+  // Delete report
+  deleteReport: (id: string): Promise<{ message: string }> => 
+    api.delete<{ message: string }>(`/analytics/reports/${id}`),
+
+  // Get exports
+  getExports: (): Promise<import("@/types").ReportExport[]> => 
+    api.get<import("@/types").ReportExport[]>('/analytics/exports'),
+
+  // Get single export
+  getExport: (id: string): Promise<import("@/types").ReportExport> => 
+    api.get<import("@/types").ReportExport>(`/analytics/exports/${id}`),
+
+  // Request export
+  requestExport: (data: { report_id?: string; format: 'csv' | 'pdf'; filters?: import("@/types").ReportFilters }): Promise<import("@/types").ReportExport> => 
+    api.post<import("@/types").ReportExport>('/analytics/exports', data),
+
+  // Download export
+  downloadExport: async (exportId: string) => {
+    const url = `${import.meta.env.VITE_API_URL || 'http://localhost:3000/api'}/analytics/exports/${exportId}/download`;
+    const token = localStorage.getItem('auth_token');
+    const response = await fetch(url, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    if (!response.ok) throw new Error('Failed to download export');
+    const blob = await response.blob();
+    const downloadUrl = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = downloadUrl;
+    const contentDisposition = response.headers.get('content-disposition');
+    const filename = contentDisposition 
+      ? contentDisposition.split('filename=')[1]?.replace(/"/g, '') 
+      : `export-${exportId}.${blob.type.includes('pdf') ? 'pdf' : 'csv'}`;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(downloadUrl);
+    document.body.removeChild(a);
+  },
+};

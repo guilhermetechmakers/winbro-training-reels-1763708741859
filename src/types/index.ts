@@ -1086,3 +1086,125 @@ export interface AdminDashboardStats {
     message?: string;
   };
 }
+
+// Analytics & Reporting types
+export interface AnalyticsEvent {
+  id: string;
+  event_type: 'play' | 'pause' | 'seek' | 'complete' | 'quiz_attempt' | 'course_enrollment' | 'course_completion' | 'certificate_issued';
+  user_id: string;
+  course_id?: string;
+  reel_id?: string;
+  timestamp: string;
+  metadata?: Record<string, unknown>;
+}
+
+export interface Metric {
+  id: string;
+  name: string;
+  description: string;
+  calculation_formula?: string;
+  update_frequency: 'realtime' | 'hourly' | 'daily' | 'weekly';
+  value: number;
+  previous_value?: number;
+  trend?: 'up' | 'down' | 'stable';
+  unit?: string;
+  category: 'content_usage' | 'course_outcomes' | 'roi' | 'engagement';
+}
+
+export interface MetricDataPoint {
+  date: string;
+  value: number;
+  label?: string;
+}
+
+export interface MetricDetail {
+  metric: Metric;
+  data_points: MetricDataPoint[];
+  breakdown?: Record<string, number>;
+  comparison?: {
+    period: string;
+    change_percentage: number;
+    change_value: number;
+  };
+}
+
+export interface Report {
+  id: string;
+  user_id: string;
+  report_type: 'content_usage' | 'course_outcomes' | 'roi' | 'custom';
+  name: string;
+  description?: string;
+  filters: ReportFilters;
+  metrics: string[]; // metric IDs
+  last_accessed_at?: string;
+  created_at: string;
+  updated_at: string;
+  is_scheduled: boolean;
+  schedule_config?: ScheduleConfig;
+}
+
+export interface ReportFilters {
+  date_range?: {
+    start_date: string;
+    end_date: string;
+  };
+  course_ids?: string[];
+  reel_ids?: string[];
+  user_ids?: string[];
+  customer_id?: string;
+  demographic_segment?: string;
+  machine_model?: string[];
+  tooling?: string[];
+  skill_level?: ('beginner' | 'intermediate' | 'advanced')[];
+}
+
+export interface ScheduleConfig {
+  frequency: 'daily' | 'weekly' | 'monthly';
+  day_of_week?: number; // 0-6 for weekly
+  day_of_month?: number; // 1-31 for monthly
+  time?: string; // HH:MM format
+  recipients: string[]; // email addresses
+}
+
+export interface ReportExport {
+  id: string;
+  user_id: string;
+  report_id?: string;
+  format: 'csv' | 'pdf';
+  status: 'pending' | 'processing' | 'completed' | 'failed';
+  file_url?: string;
+  file_size?: number;
+  date_requested: string;
+  completed_at?: string;
+  error_message?: string;
+}
+
+export interface AnalyticsDashboard {
+  metrics: Metric[];
+  recent_events: AnalyticsEvent[];
+  top_content: {
+    reel_id: string;
+    title: string;
+    views: number;
+    completion_rate: number;
+  }[];
+  top_courses: {
+    course_id: string;
+    title: string;
+    enrollments: number;
+    completion_rate: number;
+    avg_score: number;
+  }[];
+  trends: {
+    metric_id: string;
+    metric_name: string;
+    data_points: MetricDataPoint[];
+  }[];
+}
+
+export interface CustomReportBuilder {
+  selected_metrics: string[];
+  filters: ReportFilters;
+  chart_type?: 'line' | 'bar' | 'pie' | 'area';
+  group_by?: 'day' | 'week' | 'month' | 'course' | 'reel' | 'user';
+}
