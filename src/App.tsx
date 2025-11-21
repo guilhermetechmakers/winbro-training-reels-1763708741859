@@ -37,6 +37,7 @@ import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import SessionManagementPage from "@/pages/SessionManagementPage";
 import NotificationSettingsPage from "@/pages/NotificationSettingsPage";
 import SecurityCompliancePage from "@/pages/SecurityCompliancePage";
+import PerformancePage from "@/pages/PerformancePage";
 
 // React Query client with optimal defaults
 const queryClient = new QueryClient({
@@ -240,6 +241,14 @@ export default function App() {
               element={
                 <ProtectedRoute>
                   <SecurityCompliancePage />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/performance" 
+              element={
+                <ProtectedRoute allowedRoles={['admin']}>
+                  <PerformancePage />
                 </ProtectedRoute>
               } 
             />

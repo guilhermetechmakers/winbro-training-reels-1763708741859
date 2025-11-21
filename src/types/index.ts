@@ -1312,3 +1312,123 @@ export interface PenetrationTestReport {
   created_at: string;
   updated_at: string;
 }
+
+// Performance, Caching & CDN types
+export interface CDNAnalytics {
+  id: string;
+  date: string;
+  region: string;
+  total_requests: number;
+  cache_hits: number;
+  cache_misses: number;
+  cache_hit_rate: number; // percentage
+  total_bandwidth: number; // in bytes
+  avg_response_time: number; // in milliseconds
+  error_rate: number; // percentage
+  created_at: string;
+}
+
+export interface CacheRecord {
+  id: string;
+  cache_key: string;
+  endpoint: string;
+  method: string;
+  status_code: number;
+  hit_count: number;
+  miss_count: number;
+  last_hit_at?: string;
+  last_miss_at?: string;
+  created_at: string;
+  expires_at?: string;
+  invalidated_at?: string;
+  size_bytes?: number;
+  metadata?: Record<string, unknown>;
+}
+
+export interface BackgroundJob {
+  id: string;
+  job_type: 'transcode' | 'transcribe' | 'index' | 'export' | 'notification' | 'cleanup' | 'other';
+  status: 'pending' | 'queued' | 'processing' | 'completed' | 'failed' | 'cancelled';
+  priority: 'low' | 'normal' | 'high' | 'urgent';
+  progress: number; // 0-100
+  started_at?: string;
+  completed_at?: string;
+  failed_at?: string;
+  error_message?: string;
+  retry_count: number;
+  max_retries: number;
+  metadata?: Record<string, unknown>;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Alert {
+  id: string;
+  alert_type: 'sla_breach' | 'cache_hit_rate_low' | 'high_error_rate' | 'slow_response' | 'job_failure' | 'system_health';
+  severity: 'low' | 'medium' | 'high' | 'critical';
+  status: 'active' | 'acknowledged' | 'resolved' | 'dismissed';
+  title: string;
+  message: string;
+  threshold_value?: number;
+  current_value?: number;
+  metric_name?: string;
+  triggered_at: string;
+  acknowledged_at?: string;
+  resolved_at?: string;
+  acknowledged_by?: string;
+  resolved_by?: string;
+  metadata?: Record<string, unknown>;
+}
+
+export interface AlertConfiguration {
+  id: string;
+  alert_type: 'sla_breach' | 'cache_hit_rate_low' | 'high_error_rate' | 'slow_response' | 'job_failure' | 'system_health';
+  metric_name: string;
+  threshold_value: number;
+  comparison: 'greater_than' | 'less_than' | 'equals';
+  severity: 'low' | 'medium' | 'high' | 'critical';
+  enabled: boolean;
+  notification_channels: ('email' | 'sms' | 'webhook' | 'slack')[];
+  notification_recipients: string[];
+  cooldown_minutes: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PerformanceDashboard {
+  cdn_analytics: {
+    total_requests: number;
+    cache_hit_rate: number;
+    avg_response_time: number;
+    total_bandwidth: number;
+    error_rate: number;
+    regional_distribution: {
+      region: string;
+      requests: number;
+      cache_hit_rate: number;
+    }[];
+  };
+  cache_metrics: {
+    total_records: number;
+    active_records: number;
+    total_hits: number;
+    total_misses: number;
+    overall_hit_rate: number;
+    avg_cache_size: number;
+  };
+  background_jobs: {
+    total_jobs: number;
+    pending: number;
+    processing: number;
+    completed: number;
+    failed: number;
+    avg_processing_time: number;
+  };
+  active_alerts: number;
+  recent_alerts: Alert[];
+  system_health: {
+    status: 'healthy' | 'degraded' | 'down';
+    uptime_percentage: number;
+    sla_compliance: number;
+  };
+}

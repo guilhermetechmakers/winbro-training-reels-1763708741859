@@ -1387,6 +1387,115 @@ export const securityApi = {
   },
 };
 
+// Performance, Caching & CDN API functions
+export const performanceApi = {
+  // Get performance dashboard
+  getDashboard: (filters?: { date_range?: { start_date: string; end_date: string } }): Promise<import("@/types").PerformanceDashboard> => {
+    const params = new URLSearchParams();
+    if (filters?.date_range?.start_date) params.append('start_date', filters.date_range.start_date);
+    if (filters?.date_range?.end_date) params.append('end_date', filters.date_range.end_date);
+    const query = params.toString();
+    return api.get<import("@/types").PerformanceDashboard>(`/performance/dashboard${query ? `?${query}` : ''}`);
+  },
+
+  // CDN Analytics
+  getCDNAnalytics: (filters?: { date_range?: { start_date: string; end_date: string }; region?: string }): Promise<import("@/types").CDNAnalytics[]> => {
+    const params = new URLSearchParams();
+    if (filters?.date_range?.start_date) params.append('start_date', filters.date_range.start_date);
+    if (filters?.date_range?.end_date) params.append('end_date', filters.date_range.end_date);
+    if (filters?.region) params.append('region', filters.region);
+    const query = params.toString();
+    return api.get<import("@/types").CDNAnalytics[]>(`/performance/cdn/analytics${query ? `?${query}` : ''}`);
+  },
+
+  // Cache Management
+  getCacheRecords: (filters?: { endpoint?: string; status?: 'active' | 'expired' | 'invalidated'; limit?: number }): Promise<import("@/types").CacheRecord[]> => {
+    const params = new URLSearchParams();
+    if (filters?.endpoint) params.append('endpoint', filters.endpoint);
+    if (filters?.status) params.append('status', filters.status);
+    if (filters?.limit) params.append('limit', filters.limit.toString());
+    const query = params.toString();
+    return api.get<import("@/types").CacheRecord[]>(`/performance/cache/records${query ? `?${query}` : ''}`);
+  },
+
+  getCacheRecord: (id: string): Promise<import("@/types").CacheRecord> =>
+    api.get<import("@/types").CacheRecord>(`/performance/cache/records/${id}`),
+
+  invalidateCache: (data: { cache_keys?: string[]; endpoint?: string; pattern?: string }): Promise<{ message: string; invalidated_count: number }> =>
+    api.post<{ message: string; invalidated_count: number }>('/performance/cache/invalidate', data),
+
+  refreshCache: (data: { cache_keys?: string[]; endpoint?: string }): Promise<{ message: string; refreshed_count: number }> =>
+    api.post<{ message: string; refreshed_count: number }>('/performance/cache/refresh', data),
+
+  clearCache: (data?: { endpoint?: string; pattern?: string }): Promise<{ message: string; cleared_count: number }> =>
+    api.post<{ message: string; cleared_count: number }>('/performance/cache/clear', data || {}),
+
+  // Background Jobs
+  getBackgroundJobs: (filters?: { job_type?: string; status?: string; priority?: string; limit?: number }): Promise<import("@/types").BackgroundJob[]> => {
+    const params = new URLSearchParams();
+    if (filters?.job_type) params.append('job_type', filters.job_type);
+    if (filters?.status) params.append('status', filters.status);
+    if (filters?.priority) params.append('priority', filters.priority);
+    if (filters?.limit) params.append('limit', filters.limit.toString());
+    const query = params.toString();
+    return api.get<import("@/types").BackgroundJob[]>(`/performance/jobs${query ? `?${query}` : ''}`);
+  },
+
+  getBackgroundJob: (id: string): Promise<import("@/types").BackgroundJob> =>
+    api.get<import("@/types").BackgroundJob>(`/performance/jobs/${id}`),
+
+  retryJob: (id: string): Promise<import("@/types").BackgroundJob> =>
+    api.post<import("@/types").BackgroundJob>(`/performance/jobs/${id}/retry`, {}),
+
+  cancelJob: (id: string): Promise<{ message: string }> =>
+    api.post<{ message: string }>(`/performance/jobs/${id}/cancel`, {}),
+
+  reprocessJob: (id: string): Promise<import("@/types").BackgroundJob> =>
+    api.post<import("@/types").BackgroundJob>(`/performance/jobs/${id}/reprocess`, {}),
+
+  // Alerts
+  getAlerts: (filters?: { status?: string; severity?: string; alert_type?: string; limit?: number }): Promise<import("@/types").Alert[]> => {
+    const params = new URLSearchParams();
+    if (filters?.status) params.append('status', filters.status);
+    if (filters?.severity) params.append('severity', filters.severity);
+    if (filters?.alert_type) params.append('alert_type', filters.alert_type);
+    if (filters?.limit) params.append('limit', filters.limit.toString());
+    const query = params.toString();
+    return api.get<import("@/types").Alert[]>(`/performance/alerts${query ? `?${query}` : ''}`);
+  },
+
+  getAlert: (id: string): Promise<import("@/types").Alert> =>
+    api.get<import("@/types").Alert>(`/performance/alerts/${id}`),
+
+  acknowledgeAlert: (id: string): Promise<import("@/types").Alert> =>
+    api.post<import("@/types").Alert>(`/performance/alerts/${id}/acknowledge`, {}),
+
+  resolveAlert: (id: string, data?: { resolution_note?: string }): Promise<import("@/types").Alert> =>
+    api.post<import("@/types").Alert>(`/performance/alerts/${id}/resolve`, data || {}),
+
+  dismissAlert: (id: string): Promise<{ message: string }> =>
+    api.post<{ message: string }>(`/performance/alerts/${id}/dismiss`, {}),
+
+  // Alert Configurations
+  getAlertConfigurations: (): Promise<import("@/types").AlertConfiguration[]> =>
+    api.get<import("@/types").AlertConfiguration[]>('/performance/alerts/configurations'),
+
+  getAlertConfiguration: (id: string): Promise<import("@/types").AlertConfiguration> =>
+    api.get<import("@/types").AlertConfiguration>(`/performance/alerts/configurations/${id}`),
+
+  createAlertConfiguration: (data: Omit<import("@/types").AlertConfiguration, 'id' | 'created_at' | 'updated_at'>): Promise<import("@/types").AlertConfiguration> =>
+    api.post<import("@/types").AlertConfiguration>('/performance/alerts/configurations', data),
+
+  updateAlertConfiguration: (id: string, data: Partial<Omit<import("@/types").AlertConfiguration, 'id' | 'created_at' | 'updated_at'>>): Promise<import("@/types").AlertConfiguration> =>
+    api.put<import("@/types").AlertConfiguration>(`/performance/alerts/configurations/${id}`, data),
+
+  deleteAlertConfiguration: (id: string): Promise<{ message: string }> =>
+    api.delete<{ message: string }>(`/performance/alerts/configurations/${id}`),
+
+  toggleAlertConfiguration: (id: string, enabled: boolean): Promise<import("@/types").AlertConfiguration> =>
+    api.patch<import("@/types").AlertConfiguration>(`/performance/alerts/configurations/${id}/toggle`, { enabled }),
+};
+
 // Analytics & Reporting API functions
 export const analyticsApi = {
   // Get analytics dashboard
