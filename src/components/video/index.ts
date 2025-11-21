@@ -3,3 +3,7 @@ export { ProcessingQueue } from "./ProcessingQueue";
 export { AdaptiveVideoPlayer } from "./AdaptiveVideoPlayer";
 export { TranscriptViewer } from "./TranscriptViewer";
 export { DownloadConfirmationModal } from "./DownloadConfirmationModal";
+export { AddToCourseDialog } from "./AddToCourseDialog";
+export { ShareModal } from "./ShareModal";
+export { RelatedReelsCarousel } from "./RelatedReelsCarousel";
+export { CommentsSection } from "./CommentsSection";

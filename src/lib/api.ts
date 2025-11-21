@@ -170,6 +170,25 @@ export const reelsApi = {
     api.get<import("@/types").ReelPermission>(`/reels/${reelId}/permissions`),
   updatePermissions: (reelId: string, data: { visibility: 'tenant' | 'public' | 'internal'; access_level?: 'view' | 'edit' | 'admin' }): Promise<import("@/types").ReelPermission> =>
     api.put<import("@/types").ReelPermission>(`/reels/${reelId}/permissions`, data),
+  // Comments
+  getComments: (reelId: string): Promise<any[]> =>
+    api.get<any[]>(`/reels/${reelId}/comments`),
+  createComment: (reelId: string, data: { comment_text: string; timestamp?: number }): Promise<any> =>
+    api.post<any>(`/reels/${reelId}/comments`, data),
+  deleteComment: (reelId: string, commentId: string): Promise<void> =>
+    api.delete(`/reels/${reelId}/comments/${commentId}`),
+  // Related reels
+  getRelatedReels: (reelId: string, params?: URLSearchParams): Promise<{ reels: import("@/types").Reel[] }> => {
+    const query = params ? `?${params.toString()}` : '';
+    return api.get<{ reels: import("@/types").Reel[] }>(`/reels/${reelId}/related${query}`);
+  },
+};
+
+// Favorites API functions
+export const favoritesApi = {
+  getFavorites: (): Promise<any[]> => api.get<any[]>('/favorites'),
+  addFavorite: (reelId: string): Promise<any> => api.post<any>('/favorites', { reel_id: reelId }),
+  removeFavorite: (favoriteId: string): Promise<void> => api.delete(`/favorites/${favoriteId}`),
 };
 
 // Checkout and subscription API functions
