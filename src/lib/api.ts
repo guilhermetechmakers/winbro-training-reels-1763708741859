@@ -224,3 +224,13 @@ export const privacyApi = {
   sendPrivacyInquiry: (data: { name: string; email: string; message: string }): Promise<{ success: boolean; message: string }> =>
     api.post<{ success: boolean; message: string }>('/privacy/inquiry', data),
 };
+
+// Terms of Service API functions
+export const termsApi = {
+  getTermsOfService: (): Promise<import("@/types").TermsOfService> =>
+    api.get<import("@/types").TermsOfService>('/terms/current'),
+  recordUserAgreement: (data: { version_id: string; ip_address?: string; user_agent?: string }): Promise<import("@/types").UserAgreement> =>
+    api.post<import("@/types").UserAgreement>('/terms/accept', data),
+  getUserAgreements: (): Promise<import("@/types").UserAgreement[]> =>
+    api.get<import("@/types").UserAgreement[]>('/terms/agreements'),
+};

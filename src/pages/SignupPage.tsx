@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useQuery } from "@tanstack/react-query";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,6 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { Mail, Lock, User, Building2 } from "lucide-react";
+import { termsApi } from "@/lib/api";
 
 const signupSchema = z.object({
   email: z.string().email("Invalid email address"),
@@ -28,6 +30,12 @@ export default function SignupPage() {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   
+  // Fetch current terms of service to get version_id
+  const { data: terms } = useQuery({
+    queryKey: ["terms-of-service"],
+    queryFn: () => termsApi.getTermsOfService(),
+  });
+
   const {
     register,
     handleSubmit,
@@ -39,11 +47,32 @@ export default function SignupPage() {
     },
   });
 
-  const onSubmit = async (_data: SignupForm) => {
+  const onSubmit = async (data: SignupForm) => {
+    if (!data.acceptTerms) {
+      toast.error("You must accept the Terms of Service to continue.");
+      return;
+    }
+
     setIsLoading(true);
     try {
       // TODO: Implement actual signup API call
+      // For now, simulate signup
       await new Promise((resolve) => setTimeout(resolve, 1000));
+      
+      // Record terms acceptance after successful signup
+      if (terms?.version_id) {
+        try {
+          await termsApi.recordUserAgreement({
+            version_id: terms.version_id,
+            ip_address: undefined, // Could be captured from request headers on backend
+            user_agent: navigator.userAgent,
+          });
+        } catch (error) {
+          // Log error but don't block signup flow
+          console.error("Failed to record terms acceptance:", error);
+        }
+      }
+      
       toast.success("Account created! Please check your email to verify.");
       navigate("/verify-email");
     } catch (error) {

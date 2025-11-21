@@ -22,6 +22,7 @@ import AnalyticsPage from "@/pages/AnalyticsPage";
 import SettingsPage from "@/pages/SettingsPage";
 import HelpPage from "@/pages/HelpPage";
 import PrivacyPolicyPage from "@/pages/PrivacyPolicyPage";
+import TermsOfServicePage from "@/pages/TermsOfServicePage";
 import NotFoundPage from "@/pages/NotFoundPage";
 import ErrorPage from "@/pages/ErrorPage";
 import DashboardLayout from "@/components/layout/DashboardLayout";
@@ -50,6 +51,7 @@ export default function App() {
           <Route path="/verify-email" element={<EmailVerificationPage />} />
           <Route path="/reset-password" element={<PasswordResetPage />} />
           <Route path="/privacy" element={<PrivacyPolicyPage />} />
+          <Route path="/terms" element={<TermsOfServicePage />} />
           
           {/* Dashboard routes with layout */}
           <Route element={<DashboardLayout />}>

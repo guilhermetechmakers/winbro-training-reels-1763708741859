@@ -353,3 +353,32 @@ export interface PrivacyPolicy {
   last_updated: string;
   version: string;
 }
+
+// Terms of Service types
+export interface TermsOfServiceSection {
+  section_id: string;
+  section_title: string;
+  content: string;
+  order: number;
+  last_updated: string;
+}
+
+export interface TermsOfService {
+  version_id: string;
+  effective_date: string;
+  content?: string; // Full text content (if not using sections)
+  sections?: TermsOfServiceSection[]; // Structured sections
+  is_active: boolean;
+  last_updated: string;
+  version: string;
+}
+
+export interface UserAgreement {
+  agreement_id: string;
+  user_id: string;
+  version_id: string;
+  accepted_date: string;
+  ip_address?: string;
+  user_agent?: string;
+  created_at: string;
+}
