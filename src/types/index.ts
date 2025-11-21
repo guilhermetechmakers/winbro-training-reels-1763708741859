@@ -1432,3 +1432,28 @@ export interface PerformanceDashboard {
     sla_compliance: number;
   };
 }
+
+// Dashboard types
+export interface RecentActivity {
+  id: string;
+  type: 'reel' | 'course';
+  item_id: string;
+  item_title: string;
+  item_description?: string;
+  action: 'viewed' | 'completed' | 'started' | 'enrolled';
+  timestamp: string;
+  reel?: Reel;
+  course?: Course;
+}
+
+export interface CourseProgress {
+  course_id: string;
+  course_title: string;
+  course_description?: string;
+  progress: number; // 0-100
+  completed_modules: number;
+  total_modules: number;
+  last_accessed_at?: string;
+  enrollment_id: string;
+  course?: Course;
+}

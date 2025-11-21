@@ -1595,3 +1595,32 @@ export const analyticsApi = {
     document.body.removeChild(a);
   },
 };
+
+// Dashboard API functions
+export const dashboardApi = {
+  // Get recommended reels (AI-curated)
+  getRecommendedReels: (limit?: number): Promise<import("@/types").Reel[]> => {
+    const params = new URLSearchParams();
+    if (limit) params.append('limit', limit.toString());
+    const query = params.toString();
+    return api.get<import("@/types").Reel[]>(`/dashboard/recommendations${query ? `?${query}` : ''}`);
+  },
+
+  // Get recent activity (reels and courses)
+  getRecentActivity: (limit?: number): Promise<import("@/types").RecentActivity[]> => {
+    const params = new URLSearchParams();
+    if (limit) params.append('limit', limit.toString());
+    const query = params.toString();
+    return api.get<import("@/types").RecentActivity[]>(`/dashboard/activity${query ? `?${query}` : ''}`);
+  },
+
+  // Get user libraries
+  getUserLibraries: (): Promise<import("@/types").Library[]> => {
+    return api.get<import("@/types").Library[]>('/dashboard/libraries');
+  },
+
+  // Get course progress for user
+  getCourseProgress: (): Promise<import("@/types").CourseProgress[]> => {
+    return api.get<import("@/types").CourseProgress[]>('/dashboard/course-progress');
+  },
+};
