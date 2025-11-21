@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Link, useSearchParams } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -10,8 +10,17 @@ import { api } from "@/lib/api";
 import type { Reel } from "@/types";
 
 export default function ContentLibrary() {
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchQuery, setSearchQuery] = useState(searchParams.get("search") || "");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+
+  // Update search query when URL param changes
+  useEffect(() => {
+    const urlSearch = searchParams.get("search");
+    if (urlSearch !== null && urlSearch !== searchQuery) {
+      setSearchQuery(urlSearch);
+    }
+  }, [searchParams, searchQuery]);
 
   const { data: reels, isLoading } = useQuery({
     queryKey: ["reels", searchQuery],
@@ -43,7 +52,16 @@ export default function ContentLibrary() {
                 type="search"
                 placeholder="Search reels, transcripts, tags..."
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={(e) => {
+                  const newQuery = e.target.value;
+                  setSearchQuery(newQuery);
+                  // Update URL params
+                  if (newQuery) {
+                    setSearchParams({ search: newQuery });
+                  } else {
+                    setSearchParams({});
+                  }
+                }}
                 className="pl-10"
               />
             </div>
