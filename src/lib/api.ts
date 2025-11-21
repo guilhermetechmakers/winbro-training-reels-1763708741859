@@ -54,6 +54,48 @@ export const api = {
       method: 'PATCH',
       body: JSON.stringify(data),
     }),
-  delete: (endpoint: string) => 
-    apiRequest(endpoint, { method: 'DELETE' }),
+  delete: <T = void>(endpoint: string) => 
+    apiRequest<T>(endpoint, { method: 'DELETE' }),
+};
+
+// Transaction-related API functions
+export const transactionsApi = {
+  getTransactions: (filters?: { startDate?: string; endDate?: string; status?: string }): Promise<import("@/types").Transaction[]> => {
+    const params = new URLSearchParams();
+    if (filters?.startDate) params.append('startDate', filters.startDate);
+    if (filters?.endDate) params.append('endDate', filters.endDate);
+    if (filters?.status) params.append('status', filters.status);
+    const query = params.toString();
+    return api.get<import("@/types").Transaction[]>(`/transactions${query ? `?${query}` : ''}`);
+  },
+  getTransaction: (id: string): Promise<import("@/types").Transaction> => api.get<import("@/types").Transaction>(`/transactions/${id}`),
+  getInvoice: (transactionId: string): Promise<import("@/types").Invoice> => api.get<import("@/types").Invoice>(`/transactions/${transactionId}/invoice`),
+  downloadInvoice: async (transactionId: string) => {
+    const url = `${import.meta.env.VITE_API_URL || 'http://localhost:3000/api'}/transactions/${transactionId}/invoice/download`;
+    const token = localStorage.getItem('auth_token');
+    const response = await fetch(url, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    if (!response.ok) throw new Error('Failed to download invoice');
+    const blob = await response.blob();
+    const downloadUrl = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = downloadUrl;
+    a.download = `invoice-${transactionId}.pdf`;
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(downloadUrl);
+    document.body.removeChild(a);
+  },
+  requestRefund: (transactionId: string, data: { reason?: string; comments?: string }): Promise<import("@/types").Refund> =>
+    api.post<import("@/types").Refund>(`/transactions/${transactionId}/refund`, data),
+  getBillingContact: (): Promise<import("@/types").BillingContact> => api.get<import("@/types").BillingContact>('/billing/contact'),
+  updateBillingContact: (data: { contact_name: string; email: string; phone?: string }): Promise<import("@/types").BillingContact> =>
+    api.put<import("@/types").BillingContact>('/billing/contact', data),
+  getPaymentMethods: (): Promise<import("@/types").PaymentMethod[]> => api.get<import("@/types").PaymentMethod[]>('/billing/payment-methods'),
+  addPaymentMethod: (data: unknown): Promise<import("@/types").PaymentMethod> => api.post<import("@/types").PaymentMethod>('/billing/payment-methods', data),
+  updatePaymentMethod: (id: string, data: unknown): Promise<import("@/types").PaymentMethod> => api.put<import("@/types").PaymentMethod>(`/billing/payment-methods/${id}`, data),
+  deletePaymentMethod: (id: string): Promise<void> => api.delete(`/billing/payment-methods/${id}`),
 };

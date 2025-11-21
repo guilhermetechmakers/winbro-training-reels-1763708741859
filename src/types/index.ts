@@ -95,3 +95,57 @@ export interface Library {
   created_at: string;
   updated_at: string;
 }
+
+export interface Transaction {
+  id: string;
+  user_id: string;
+  date: string;
+  plan: string;
+  amount: number;
+  status: 'completed' | 'pending' | 'failed' | 'refunded';
+  invoice_link?: string;
+  refund_requested: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Invoice {
+  id: string;
+  transaction_id: string;
+  pdf_link?: string;
+  issue_date: string;
+  created_at: string;
+}
+
+export interface Refund {
+  id: string;
+  transaction_id: string;
+  user_id: string;
+  request_date: string;
+  status: 'pending' | 'approved' | 'rejected' | 'processed';
+  reason?: string;
+  comments?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface BillingContact {
+  user_id: string;
+  contact_name: string;
+  email: string;
+  phone?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PaymentMethod {
+  id: string;
+  user_id: string;
+  method_type: 'card' | 'bank_account' | 'other';
+  card_last_four?: string;
+  card_brand?: string;
+  expiration_date?: string;
+  is_default: boolean;
+  created_at: string;
+  updated_at: string;
+}
