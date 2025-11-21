@@ -115,14 +115,11 @@ export function useLogout() {
 
 // Email verification
 export function useVerifyEmail() {
-  const navigate = useNavigate();
-
   return useMutation({
     mutationFn: (token: string) => authApi.verifyEmail(token),
     onSuccess: (data) => {
       if (data.verified) {
         toast.success("Email verified successfully!");
-        navigate("/dashboard");
       } else {
         toast.error(data.message || "Email verification failed");
       }
