@@ -149,3 +149,33 @@ export interface PaymentMethod {
   created_at: string;
   updated_at: string;
 }
+
+export interface ReelVersion {
+  id: string;
+  reel_id: string;
+  version_number: number;
+  changes: string; // JSON string or description of changes
+  created_by: string;
+  created_at: string;
+  metadata_snapshot: Partial<Reel>;
+}
+
+export interface ReprocessJob {
+  id: string;
+  reel_id: string;
+  status: 'pending' | 'processing' | 'completed' | 'failed';
+  progress?: number; // 0-100
+  error_message?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ReelPermission {
+  id: string;
+  reel_id: string;
+  user_id?: string;
+  access_level: 'view' | 'edit' | 'admin';
+  visibility: 'tenant' | 'public' | 'internal';
+  created_at: string;
+  updated_at: string;
+}

@@ -99,3 +99,28 @@ export const transactionsApi = {
   updatePaymentMethod: (id: string, data: unknown): Promise<import("@/types").PaymentMethod> => api.put<import("@/types").PaymentMethod>(`/billing/payment-methods/${id}`, data),
   deletePaymentMethod: (id: string): Promise<void> => api.delete(`/billing/payment-methods/${id}`),
 };
+
+// Reel management API functions
+export const reelsApi = {
+  getReel: (id: string): Promise<import("@/types").Reel> => api.get<import("@/types").Reel>(`/reels/${id}`),
+  updateReel: (id: string, data: Partial<import("@/types").Reel>): Promise<import("@/types").Reel> =>
+    api.put<import("@/types").Reel>(`/reels/${id}`, data),
+  getReelVersions: (id: string): Promise<import("@/types").ReelVersion[]> =>
+    api.get<import("@/types").ReelVersion[]>(`/reels/${id}/versions`),
+  rollbackToVersion: (reelId: string, versionId: string): Promise<import("@/types").Reel> =>
+    api.post<import("@/types").Reel>(`/reels/${reelId}/versions/${versionId}/rollback`, {}),
+  startReprocess: (id: string): Promise<import("@/types").ReprocessJob> =>
+    api.post<import("@/types").ReprocessJob>(`/reels/${id}/reprocess`, {}),
+  getReprocessStatus: (reelId: string, jobId: string): Promise<import("@/types").ReprocessJob> =>
+    api.get<import("@/types").ReprocessJob>(`/reels/${reelId}/reprocess/${jobId}`),
+  cancelReprocess: (reelId: string, jobId: string): Promise<void> =>
+    api.delete(`/reels/${reelId}/reprocess/${jobId}`),
+  getTranscript: (reelId: string): Promise<import("@/types").Transcript> =>
+    api.get<import("@/types").Transcript>(`/reels/${reelId}/transcript`),
+  updateTranscript: (reelId: string, data: { segments: import("@/types").TranscriptSegment[]; change_note?: string }): Promise<import("@/types").Transcript> =>
+    api.put<import("@/types").Transcript>(`/reels/${reelId}/transcript`, data),
+  getPermissions: (reelId: string): Promise<import("@/types").ReelPermission> =>
+    api.get<import("@/types").ReelPermission>(`/reels/${reelId}/permissions`),
+  updatePermissions: (reelId: string, data: { visibility: 'tenant' | 'public' | 'internal'; access_level?: 'view' | 'edit' | 'admin' }): Promise<import("@/types").ReelPermission> =>
+    api.put<import("@/types").ReelPermission>(`/reels/${reelId}/permissions`, data),
+};
