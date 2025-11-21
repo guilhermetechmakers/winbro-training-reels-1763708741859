@@ -37,6 +37,10 @@ export default {
   				DEFAULT: '#22C55E',
   				foreground: '#FFFFFF'
   			},
+  			destructive: {
+  				DEFAULT: 'rgb(var(--destructive))',
+  				foreground: 'rgb(var(--destructive-foreground))'
+  			},
   			muted: {
   				DEFAULT: '#E5E7EB',
   				foreground: '#6B7280'

@@ -370,4 +370,45 @@ export const authApi = {
       redirect_url: redirectUrl || window.location.origin + '/auth/sso/callback'
     });
   },
+  
+  loginWith2FA: (credentials: import("@/types").LoginWith2FARequest): Promise<import("@/types").LoginWith2FAResponse> => {
+    return api.post<import("@/types").LoginWith2FAResponse>('/auth/login-2fa', credentials);
+  },
+};
+
+// Two-Factor Authentication API functions
+export const twoFactorApi = {
+  get2FAStatus: (): Promise<import("@/types").TwoFactorAuth> => 
+    api.get<import("@/types").TwoFactorAuth>('/auth/2fa/status'),
+  
+  generateTOTPSecret: (): Promise<import("@/types").TOTPSetupResponse> => 
+    api.post<import("@/types").TOTPSetupResponse>('/auth/2fa/totp/generate', {}),
+  
+  verifyTOTPSetup: (code: string): Promise<{ verified: boolean; recovery_codes: string[] }> => 
+    api.post<{ verified: boolean; recovery_codes: string[] }>('/auth/2fa/totp/verify', { code }),
+  
+  sendSMSOTP: (data: import("@/types").SMSOTPRequest): Promise<import("@/types").SMSOTPResponse> => 
+    api.post<import("@/types").SMSOTPResponse>('/auth/2fa/sms/send', data),
+  
+  verifySMSOTP: (data: { phone_number: string; code: string }): Promise<{ verified: boolean; recovery_codes: string[] }> => 
+    api.post<{ verified: boolean; recovery_codes: string[] }>('/auth/2fa/sms/verify', data),
+  
+  verify2FACode: (data: import("@/types").Verify2FACodeRequest): Promise<import("@/types").Verify2FACodeResponse> => 
+    api.post<import("@/types").Verify2FACodeResponse>('/auth/2fa/verify', data),
+  
+  disable2FA: (): Promise<{ message: string }> => 
+    api.post<{ message: string }>('/auth/2fa/disable', {}),
+  
+  regenerateRecoveryCodes: (): Promise<import("@/types").RecoveryCodesResponse> => 
+    api.post<import("@/types").RecoveryCodesResponse>('/auth/2fa/recovery-codes/regenerate', {}),
+  
+  getRecoveryCodes: (): Promise<import("@/types").RecoveryCodesResponse> => 
+    api.get<import("@/types").RecoveryCodesResponse>('/auth/2fa/recovery-codes'),
+  
+  getAuthAttempts: (limit?: number): Promise<import("@/types").AuthAttempt[]> => {
+    const params = new URLSearchParams();
+    if (limit) params.append('limit', limit.toString());
+    const query = params.toString();
+    return api.get<import("@/types").AuthAttempt[]>(`/auth/2fa/attempts${query ? `?${query}` : ''}`);
+  },
 };

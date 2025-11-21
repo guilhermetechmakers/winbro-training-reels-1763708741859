@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -7,7 +8,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Mail, Lock, Chrome, Building2 } from "lucide-react";
-import { useLogin, useSSOProviders, useInitiateSSO } from "@/hooks/use-auth";
+import { useSSOProviders, useInitiateSSO } from "@/hooks/use-auth";
+import { TwoFactorAuthPrompt } from "@/components/auth/TwoFactorAuthPrompt";
+import { authApi, tokenManager } from "@/lib/api";
+import { useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { authKeys } from "@/hooks/use-auth";
+import type { LoginWith2FAResponse } from "@/types";
 
 const loginSchema = z.object({
   email: z.string().email("Invalid email address"),
@@ -17,7 +25,12 @@ const loginSchema = z.object({
 type LoginForm = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
-  const loginMutation = useLogin();
+  const [requires2FA, setRequires2FA] = useState(false);
+  const [twoFactorMethod, setTwoFactorMethod] = useState<"totp" | "sms">("totp");
+  const [phoneNumber, setPhoneNumber] = useState<string>();
+  const [credentials, setCredentials] = useState<LoginForm | null>(null);
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { data: ssoProviders } = useSSOProviders();
   const initiateSSO = useInitiateSSO();
   
@@ -30,15 +43,80 @@ export default function LoginPage() {
   });
 
   const onSubmit = async (data: LoginForm) => {
-    loginMutation.mutate({
-      email: data.email,
-      password: data.password,
-    });
+    try {
+      const response: LoginWith2FAResponse = await authApi.loginWith2FA({
+        email: data.email,
+        password: data.password,
+      });
+
+      if (response.requires_2fa) {
+        // Store credentials for 2FA verification
+        setCredentials(data);
+        setTwoFactorMethod(response.message?.includes("SMS") ? "sms" : "totp");
+        setPhoneNumber(response.message?.match(/\+?[\d\s-]+/)?.[0]);
+        setRequires2FA(true);
+      } else if (response.auth_response) {
+        // Login successful without 2FA
+        handleLoginSuccess(response.auth_response);
+      }
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Login failed. Please check your credentials.");
+    }
+  };
+
+  const handleLoginSuccess = (authResponse: typeof authApi.login extends (...args: any[]) => Promise<infer T> ? T : never) => {
+    // Store tokens and user
+    tokenManager.setTokens(authResponse.access_token, authResponse.refresh_token);
+    tokenManager.setUser(authResponse.user);
+    
+    // Invalidate and refetch user
+    queryClient.setQueryData(authKeys.user(), authResponse.user);
+    
+    toast.success("Logged in successfully!");
+    navigate("/dashboard");
+  };
+
+  const handle2FAVerified = async (code?: string, recoveryCode?: string) => {
+    if (!credentials) return;
+
+    try {
+      // Complete login with 2FA code
+      const response: LoginWith2FAResponse = await authApi.loginWith2FA({
+        email: credentials.email,
+        password: credentials.password,
+        two_factor_code: code,
+        recovery_code: recoveryCode,
+      });
+
+      if (response.auth_response) {
+        handleLoginSuccess(response.auth_response);
+      } else {
+        toast.error("2FA verification failed");
+      }
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "2FA verification failed");
+    }
   };
 
   const handleSSO = (providerId: string) => {
     initiateSSO.mutate({ providerId });
   };
+
+  if (requires2FA) {
+    return (
+      <div className="min-h-screen bg-background-primary flex items-center justify-center p-4">
+        <TwoFactorAuthPrompt
+          method={twoFactorMethod}
+          phoneNumber={phoneNumber}
+          onVerified={handle2FAVerified}
+          onUseRecoveryCode={() => {
+            // Recovery code flow would be handled in the component
+            setRequires2FA(false);
+          }}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background-primary flex items-center justify-center p-4">
@@ -93,8 +171,8 @@ export default function LoginPage() {
               )}
             </div>
 
-            <Button type="submit" className="w-full" disabled={loginMutation.isPending}>
-              {loginMutation.isPending ? "Signing in..." : "Sign in"}
+            <Button type="submit" className="w-full">
+              Sign in
             </Button>
           </form>
 

@@ -471,3 +471,66 @@ export interface ErrorReport {
   created_at: string;
   updated_at: string;
 }
+
+// Two-Factor Authentication types
+export interface TwoFactorAuth {
+  user_id: string;
+  method: 'totp' | 'sms' | null;
+  phone_number?: string;
+  is_enabled: boolean;
+  is_enforced: boolean;
+  recovery_codes_count: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface TOTPSetupResponse {
+  secret: string;
+  qr_code_url: string;
+  manual_entry_key: string;
+}
+
+export interface SMSOTPRequest {
+  phone_number: string;
+}
+
+export interface SMSOTPResponse {
+  message: string;
+  expires_in: number; // seconds
+}
+
+export interface Verify2FACodeRequest {
+  code: string;
+  method?: 'totp' | 'sms';
+}
+
+export interface Verify2FACodeResponse {
+  verified: boolean;
+  message: string;
+}
+
+export interface RecoveryCodesResponse {
+  codes: string[];
+  created_at: string;
+}
+
+export interface AuthAttempt {
+  id: string;
+  user_id: string;
+  attempt_time: string;
+  success: boolean;
+  method: 'totp' | 'sms' | 'recovery_code';
+  ip_address?: string;
+  user_agent?: string;
+}
+
+export interface LoginWith2FARequest extends LoginCredentials {
+  two_factor_code?: string;
+  recovery_code?: string;
+}
+
+export interface LoginWith2FAResponse {
+  requires_2fa: boolean;
+  auth_response?: AuthResponse;
+  message?: string;
+}
