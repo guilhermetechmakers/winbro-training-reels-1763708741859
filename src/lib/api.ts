@@ -142,3 +142,71 @@ export const checkoutApi = {
   processCheckout: (data: import("@/types").CheckoutData): Promise<import("@/types").CheckoutResponse> => 
     api.post<import("@/types").CheckoutResponse>('/checkout/process', data),
 };
+
+// Help & Support API functions
+export const helpApi = {
+  searchFAQs: (query: string): Promise<import("@/types").FAQ[]> => {
+    const params = new URLSearchParams();
+    params.append('q', query);
+    return api.get<import("@/types").FAQ[]>(`/help/faqs/search?${params.toString()}`);
+  },
+  getFAQs: (category?: string): Promise<import("@/types").FAQ[]> => {
+    const params = new URLSearchParams();
+    if (category) params.append('category', category);
+    const query = params.toString();
+    return api.get<import("@/types").FAQ[]>(`/help/faqs${query ? `?${query}` : ''}`);
+  },
+  getFAQCategories: (): Promise<string[]> => 
+    api.get<string[]>('/help/faqs/categories'),
+  getUserGuides: (category?: string): Promise<import("@/types").UserGuide[]> => {
+    const params = new URLSearchParams();
+    if (category) params.append('category', category);
+    const query = params.toString();
+    return api.get<import("@/types").UserGuide[]>(`/help/guides${query ? `?${query}` : ''}`);
+  },
+  submitSupportTicket: async (data: { name: string; email: string; message: string; attachment?: File }): Promise<import("@/types").SupportTicket> => {
+    const formData = new FormData();
+    formData.append('name', data.name);
+    formData.append('email', data.email);
+    formData.append('message', data.message);
+    if (data.attachment) {
+      formData.append('attachment', data.attachment);
+    }
+    
+    const url = `${import.meta.env.VITE_API_URL || 'http://localhost:3000/api'}/help/support/submit`;
+    const token = localStorage.getItem('auth_token');
+    
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        Authorization: token ? `Bearer ${token}` : '',
+      },
+      body: formData,
+    });
+    
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ message: `API Error: ${response.status}` }));
+      throw new Error(error.message || `API Error: ${response.status}`);
+    }
+    
+    return response.json();
+  },
+  getVideoTutorials: (category?: string): Promise<import("@/types").VideoTutorial[]> => {
+    const params = new URLSearchParams();
+    if (category) params.append('category', category);
+    const query = params.toString();
+    return api.get<import("@/types").VideoTutorial[]>(`/help/tutorials${query ? `?${query}` : ''}`);
+  },
+  getOnboardingChecklist: (): Promise<import("@/types").OnboardingChecklistItem[]> => 
+    api.get<import("@/types").OnboardingChecklistItem[]>('/help/onboarding/checklist'),
+  updateOnboardingChecklistItem: (itemId: string, completed: boolean): Promise<import("@/types").OnboardingChecklistItem> =>
+    api.patch<import("@/types").OnboardingChecklistItem>(`/help/onboarding/checklist/${itemId}`, { completed }),
+  getSystemStatus: (): Promise<import("@/types").SystemStatus> => 
+    api.get<import("@/types").SystemStatus>('/help/system/status'),
+  getReleaseNotes: (limit?: number): Promise<import("@/types").ReleaseNote[]> => {
+    const params = new URLSearchParams();
+    if (limit) params.append('limit', limit.toString());
+    const query = params.toString();
+    return api.get<import("@/types").ReleaseNote[]>(`/help/releases${query ? `?${query}` : ''}`);
+  },
+};

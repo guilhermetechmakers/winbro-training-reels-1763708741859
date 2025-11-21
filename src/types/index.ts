@@ -247,3 +247,81 @@ export interface CheckoutResponse {
   success: boolean;
   message: string;
 }
+
+// Help & Support types
+export interface FAQ {
+  question_id: string;
+  question_text: string;
+  answer_text: string;
+  category: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface UserGuide {
+  guide_id: string;
+  title: string;
+  content: string;
+  category: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface SupportTicket {
+  ticket_id: string;
+  user_name: string;
+  user_email: string;
+  message: string;
+  attachment_path?: string;
+  status: 'open' | 'in_progress' | 'resolved' | 'closed';
+  created_at: string;
+  updated_at: string;
+}
+
+export interface VideoTutorial {
+  video_id: string;
+  title: string;
+  description: string;
+  video_url: string;
+  thumbnail_url?: string;
+  duration?: number;
+  category: string;
+  created_at: string;
+}
+
+export interface ReleaseNote {
+  release_id: string;
+  version: string;
+  description: string;
+  date: string;
+  features?: string[];
+  bug_fixes?: string[];
+  improvements?: string[];
+  created_at: string;
+}
+
+export interface SystemStatus {
+  status_id: string;
+  current_status: 'operational' | 'degraded' | 'down' | 'maintenance';
+  message?: string;
+  last_updated: string;
+  incidents?: SystemIncident[];
+}
+
+export interface SystemIncident {
+  id: string;
+  title: string;
+  description: string;
+  status: 'investigating' | 'identified' | 'monitoring' | 'resolved';
+  severity: 'minor' | 'major' | 'critical';
+  started_at: string;
+  resolved_at?: string;
+}
+
+export interface OnboardingChecklistItem {
+  id: string;
+  title: string;
+  description: string;
+  completed: boolean;
+  order: number;
+}
