@@ -773,3 +773,103 @@ export interface FilterOptions {
     max: number;
   };
 }
+
+// Video Player & Offline Downloads types
+export interface VideoQuality {
+  label: string;
+  value: string;
+  resolution?: string;
+  bitrate?: number;
+}
+
+export interface VideoPlayerState {
+  isPlaying: boolean;
+  currentTime: number;
+  duration: number;
+  volume: number;
+  playbackRate: number;
+  quality: string;
+  availableQualities: VideoQuality[];
+  isLoading: boolean;
+  error?: string;
+}
+
+export interface VideoDownload {
+  id: string;
+  user_id: string;
+  video_id: string;
+  device_id: string;
+  status: 'pending' | 'downloading' | 'completed' | 'failed' | 'expired';
+  progress: number; // 0-100
+  file_path?: string;
+  file_size?: number;
+  encrypted: boolean;
+  access_token?: string;
+  expires_at?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface DownloadRequest {
+  video_id: string;
+  quality?: string;
+  device_id?: string;
+}
+
+export interface DownloadResponse {
+  download_id: string;
+  download_url: string;
+  file_size: number;
+  expires_at: string;
+  access_token: string;
+}
+
+export interface PlaybackAnalytics {
+  id: string;
+  user_id: string;
+  video_id: string;
+  event_type: 'play' | 'pause' | 'seek' | 'complete' | 'quality_change' | 'volume_change';
+  timestamp: number; // video timestamp in seconds
+  duration?: number; // event duration in seconds
+  metadata?: {
+    quality?: string;
+    volume?: number;
+    playback_rate?: number;
+    seek_from?: number;
+    seek_to?: number;
+  };
+  created_at: string;
+}
+
+export interface PlaybackSession {
+  session_id: string;
+  user_id: string;
+  video_id: string;
+  start_time: string;
+  end_time?: string;
+  total_watch_time: number; // in seconds
+  completion_percentage: number; // 0-100
+  events: PlaybackAnalytics[];
+  created_at: string;
+  updated_at: string;
+}
+
+export interface DeviceRegistration {
+  device_id: string;
+  user_id: string;
+  device_name: string;
+  device_type: 'desktop' | 'mobile' | 'tablet';
+  os?: string;
+  browser?: string;
+  is_active: boolean;
+  registered_at: string;
+  last_used_at?: string;
+}
+
+export interface OfflineVideoAccess {
+  video_id: string;
+  device_id: string;
+  access_token: string;
+  expires_at: string;
+  is_valid: boolean;
+}

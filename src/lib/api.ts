@@ -630,6 +630,97 @@ export const searchApi = {
   },
 };
 
+// Video Player & Streaming API functions
+export const videoPlayerApi = {
+  // Get video streaming URL with available qualities
+  getStreamingUrl: (videoId: string, quality?: string): Promise<{ hls_url: string; qualities: import("@/types").VideoQuality[] }> => {
+    const params = new URLSearchParams();
+    if (quality) params.append('quality', quality);
+    const query = params.toString();
+    return api.get<{ hls_url: string; qualities: import("@/types").VideoQuality[] }>(`/videos/${videoId}/stream${query ? `?${query}` : ''}`);
+  },
+
+  // Get signed playback URL for offline content
+  getOfflinePlaybackUrl: (videoId: string, deviceId: string): Promise<{ playback_url: string; access_token: string; expires_at: string }> => {
+    return api.get<{ playback_url: string; access_token: string; expires_at: string }>(`/videos/${videoId}/offline/play?device_id=${deviceId}`);
+  },
+
+  // Verify offline access token
+  verifyOfflineAccess: (videoId: string, deviceId: string, accessToken: string): Promise<import("@/types").OfflineVideoAccess> => {
+    return api.post<import("@/types").OfflineVideoAccess>(`/videos/${videoId}/offline/verify`, { device_id: deviceId, access_token: accessToken });
+  },
+};
+
+// Video Download API functions
+export const videoDownloadApi = {
+  // Request download for a video
+  requestDownload: (data: import("@/types").DownloadRequest): Promise<import("@/types").DownloadResponse> => {
+    return api.post<import("@/types").DownloadResponse>('/videos/download/request', data);
+  },
+
+  // Get download status
+  getDownloadStatus: (downloadId: string): Promise<import("@/types").VideoDownload> => {
+    return api.get<import("@/types").VideoDownload>(`/videos/download/${downloadId}/status`);
+  },
+
+  // Get user's downloads
+  getDownloads: (filters?: { status?: string; video_id?: string }): Promise<import("@/types").VideoDownload[]> => {
+    const params = new URLSearchParams();
+    if (filters?.status) params.append('status', filters.status);
+    if (filters?.video_id) params.append('video_id', filters.video_id);
+    const query = params.toString();
+    return api.get<import("@/types").VideoDownload[]>(`/videos/download${query ? `?${query}` : ''}`);
+  },
+
+  // Cancel download
+  cancelDownload: (downloadId: string): Promise<{ message: string }> => {
+    return api.post<{ message: string }>(`/videos/download/${downloadId}/cancel`, {});
+  },
+
+  // Delete downloaded video
+  deleteDownload: (downloadId: string): Promise<{ message: string }> => {
+    return api.delete<{ message: string }>(`/videos/download/${downloadId}`);
+  },
+
+  // Register device for offline playback
+  registerDevice: (data: { device_name: string; device_type: 'desktop' | 'mobile' | 'tablet'; os?: string; browser?: string }): Promise<import("@/types").DeviceRegistration> => {
+    return api.post<import("@/types").DeviceRegistration>('/devices/register', data);
+  },
+
+  // Get registered devices
+  getDevices: (): Promise<import("@/types").DeviceRegistration[]> => {
+    return api.get<import("@/types").DeviceRegistration[]>('/devices');
+  },
+
+  // Unregister device
+  unregisterDevice: (deviceId: string): Promise<{ message: string }> => {
+    return api.delete<{ message: string }>(`/devices/${deviceId}`);
+  },
+};
+
+// Video Analytics API functions
+export const videoAnalyticsApi = {
+  // Log playback event
+  logEvent: (data: Omit<import("@/types").PlaybackAnalytics, 'id' | 'user_id' | 'created_at'>): Promise<import("@/types").PlaybackAnalytics> => {
+    return api.post<import("@/types").PlaybackAnalytics>('/analytics/video/events', data);
+  },
+
+  // Get playback session
+  getSession: (sessionId: string): Promise<import("@/types").PlaybackSession> => {
+    return api.get<import("@/types").PlaybackSession>(`/analytics/video/sessions/${sessionId}`);
+  },
+
+  // Create or update playback session
+  updateSession: (sessionId: string, data: Partial<import("@/types").PlaybackSession>): Promise<import("@/types").PlaybackSession> => {
+    return api.patch<import("@/types").PlaybackSession>(`/analytics/video/sessions/${sessionId}`, data);
+  },
+
+  // End playback session
+  endSession: (sessionId: string): Promise<import("@/types").PlaybackSession> => {
+    return api.post<import("@/types").PlaybackSession>(`/analytics/video/sessions/${sessionId}/end`, {});
+  },
+};
+
 // Structured Metadata & Tagging API functions
 export const metadataApi = {
   // Machine Models

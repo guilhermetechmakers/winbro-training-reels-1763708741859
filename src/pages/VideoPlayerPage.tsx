@@ -1,21 +1,76 @@
 import { useParams, Link } from "react-router-dom";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useState, useEffect } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Play, Download, Share2, Heart, Plus, Clock, User, Calendar } from "lucide-react";
+import { Download, Share2, Heart, Plus, Clock, User, Calendar } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { api } from "@/lib/api";
+import { api, videoPlayerApi } from "@/lib/api";
+import { AdaptiveVideoPlayer, TranscriptViewer, DownloadConfirmationModal } from "@/components/video";
+import { useVideoDownload } from "@/hooks/use-video-download";
+import { useVideoAnalytics } from "@/hooks/use-video-analytics";
 import type { Reel } from "@/types";
 
 export default function VideoPlayerPage() {
   const { id } = useParams<{ id: string }>();
+  const [showDownloadModal, setShowDownloadModal] = useState(false);
+  const [hlsUrl, setHlsUrl] = useState<string | undefined>();
+  const [availableQualities, setAvailableQualities] = useState<any[]>([]);
   
   const { data: reel, isLoading } = useQuery({
     queryKey: ["reel", id],
     queryFn: () => api.get<Reel>(`/reels/${id}`),
     enabled: !!id,
   });
+
+  // Get streaming URL
+  const { data: streamingData } = useQuery({
+    queryKey: ["video-stream", id],
+    queryFn: () => videoPlayerApi.getStreamingUrl(id!),
+    enabled: !!id && !!reel,
+  });
+
+  useEffect(() => {
+    if (streamingData) {
+      setHlsUrl(streamingData.hls_url);
+      setAvailableQualities(streamingData.qualities);
+    } else if (reel?.hls_url) {
+      setHlsUrl(reel.hls_url);
+    }
+  }, [streamingData, reel]);
+
+  // Video download hook
+  const { requestDownload, isRequesting } = useVideoDownload();
+  
+  // Video analytics hook
+  const { logComplete } = useVideoAnalytics(id || '');
+
+  // State for video player (will be managed by AdaptiveVideoPlayer)
+  const [playerState, setPlayerState] = useState({ currentTime: 0, duration: 0, isPlaying: false });
+
+  // Handle video completion (will be called from AdaptiveVideoPlayer)
+  const handleVideoStateChange = (state: { currentTime: number; duration: number; isPlaying: boolean }) => {
+    setPlayerState(state);
+    if (state.duration > 0 && state.currentTime >= state.duration - 0.5 && state.isPlaying) {
+      logComplete(state.duration);
+    }
+  };
+
+  const handleDownload = (quality?: string) => {
+    if (id) {
+      requestDownload(id, quality);
+      setShowDownloadModal(false);
+    }
+  };
+
+  const handleSeek = (time: number) => {
+    // Seek is handled by AdaptiveVideoPlayer via the seek function reference
+    const seekFn = (window as any)[`videoSeek_${id}`];
+    if (seekFn) {
+      seekFn(time);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -41,21 +96,41 @@ export default function VideoPlayerPage() {
 
   return (
     <div className="space-y-6 animate-fade-in-up">
-      {/* Video Player */}
-      <Card>
-        <CardContent className="p-0">
-          <div className="aspect-video bg-muted rounded-lg flex items-center justify-center relative">
-            <div className="text-center">
-              <Play className="h-16 w-16 text-primary mx-auto mb-4" />
-              <p className="text-foreground-secondary">HLS Video Player</p>
-              <p className="text-sm text-foreground-secondary mt-2">
-                Adaptive streaming with quality selector and captions
-              </p>
-            </div>
-            {/* Video controls would be here */}
-          </div>
-        </CardContent>
-      </Card>
+      {/* Video Player with Transcript Side-by-Side */}
+      <div className="grid lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2">
+          <Card>
+            <CardContent className="p-0">
+              {hlsUrl ? (
+                <AdaptiveVideoPlayer
+                  videoId={id || ''}
+                  hlsUrl={hlsUrl}
+                  title={reel?.title}
+                  onStateChange={handleVideoStateChange}
+                  onSeek={handleSeek}
+                />
+              ) : (
+                <div className="aspect-video bg-muted rounded-lg flex items-center justify-center">
+                  <div className="text-center">
+                    <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary mx-auto mb-4"></div>
+                    <p className="text-foreground-secondary">Loading video player...</p>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Transcript Viewer */}
+        <div className="lg:col-span-1">
+          <TranscriptViewer
+            transcript={reel?.transcript || null}
+            currentTime={playerState.currentTime}
+            onSeek={handleSeek}
+            className="h-full"
+          />
+        </div>
+      </div>
 
       {/* Metadata and Actions */}
       <div className="grid lg:grid-cols-3 gap-6">
@@ -87,7 +162,10 @@ export default function VideoPlayerPage() {
               <Share2 className="mr-2 h-4 w-4" />
               Share
             </Button>
-            <Button variant="outline">
+            <Button 
+              variant="outline"
+              onClick={() => setShowDownloadModal(true)}
+            >
               <Download className="mr-2 h-4 w-4" />
               Download
             </Button>
@@ -147,36 +225,11 @@ export default function VideoPlayerPage() {
               </Card>
             </TabsContent>
             <TabsContent value="transcript">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Transcript</CardTitle>
-                  <CardDescription>
-                    Click on any timestamp to seek to that point in the video
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  {reel.transcript ? (
-                    <div className="space-y-2">
-                      {reel.transcript.segments.map((segment) => (
-                        <div
-                          key={segment.id}
-                          className="p-2 rounded hover:bg-muted cursor-pointer"
-                          onClick={() => {
-                            // TODO: Seek video to segment.start
-                          }}
-                        >
-                          <span className="text-xs text-foreground-secondary">
-                            {Math.floor(segment.start / 60)}:{(Math.floor(segment.start) % 60).toString().padStart(2, '0')}
-                          </span>
-                          <p className="mt-1">{segment.text}</p>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-foreground-secondary">No transcript available</p>
-                  )}
-                </CardContent>
-              </Card>
+              <TranscriptViewer
+                transcript={reel.transcript || null}
+                currentTime={playerState.currentTime}
+                onSeek={handleSeek}
+              />
             </TabsContent>
             <TabsContent value="related">
               <Card>
@@ -213,6 +266,16 @@ export default function VideoPlayerPage() {
           </Card>
         </div>
       </div>
+
+      {/* Download Confirmation Modal */}
+      <DownloadConfirmationModal
+        open={showDownloadModal}
+        onOpenChange={setShowDownloadModal}
+        onConfirm={handleDownload}
+        videoTitle={reel?.title || ''}
+        availableQualities={availableQualities}
+        isLoading={isRequesting}
+      />
     </div>
   );
 }
