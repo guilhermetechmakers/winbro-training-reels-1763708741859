@@ -4,10 +4,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Search, Filter, Grid, List, Clock } from "lucide-react";
+import { Search, Filter, Grid, List, Clock, Video } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import type { Reel } from "@/types";
+import { LoadingState, EmptyState } from "@/components/states";
 
 export default function ContentLibrary() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -91,17 +92,10 @@ export default function ContentLibrary() {
 
       {/* Results */}
       {isLoading ? (
-        <div className={viewMode === "grid" ? "grid md:grid-cols-3 lg:grid-cols-4 gap-4" : "space-y-4"}>
-          {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
-            <Card key={i} className="animate-pulse">
-              <CardContent className="p-4">
-                <div className="aspect-video bg-muted rounded mb-4"></div>
-                <div className="h-4 bg-muted rounded w-3/4 mb-2"></div>
-                <div className="h-3 bg-muted rounded w-1/2"></div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+        <LoadingState
+          variant={viewMode === "grid" ? "thumbnail" : "list"}
+          count={8}
+        />
       ) : reels && reels.length > 0 ? (
         <div className={viewMode === "grid" ? "grid md:grid-cols-3 lg:grid-cols-4 gap-4" : "space-y-4"}>
           {reels.map((reel) => (
@@ -150,14 +144,34 @@ export default function ContentLibrary() {
           ))}
         </div>
       ) : (
-        <Card>
-          <CardContent className="py-12 text-center">
-            <p className="text-foreground-secondary mb-4">No reels found</p>
-            <Link to="/upload">
-              <Button>Upload Your First Reel</Button>
-            </Link>
-          </CardContent>
-        </Card>
+        <EmptyState
+          icon={Video}
+          title="No reels found"
+          description={
+            searchQuery
+              ? `No reels match your search "${searchQuery}". Try different keywords or clear your search.`
+              : "Get started by uploading your first training reel to the library."
+          }
+          action={{
+            label: searchQuery ? "Clear Search" : "Upload Your First Reel",
+            onClick: searchQuery
+              ? () => {
+                  setSearchQuery("");
+                  setSearchParams({});
+                }
+              : undefined,
+            href: searchQuery ? undefined : "/upload",
+          }}
+          secondaryAction={
+            searchQuery
+              ? {
+                  label: "Upload Reel",
+                  href: "/upload",
+                  variant: "outline",
+                }
+              : undefined
+          }
+        />
       )}
     </div>
   );

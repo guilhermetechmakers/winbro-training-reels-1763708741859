@@ -6,6 +6,7 @@ import { Library, Upload, BookOpen, Clock } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import type { Reel, Course, Library as LibraryType } from "@/types";
+import { LoadingState, EmptyState } from "@/components/states";
 
 export default function UserDashboard() {
   // TODO: Replace with actual API hooks
@@ -96,16 +97,7 @@ export default function UserDashboard() {
           </Link>
         </div>
         {librariesLoading ? (
-          <div className="grid md:grid-cols-3 gap-4">
-            {[1, 2, 3].map((i) => (
-              <Card key={i} className="animate-pulse">
-                <CardHeader>
-                  <div className="h-4 bg-muted rounded w-3/4"></div>
-                  <div className="h-3 bg-muted rounded w-1/2 mt-2"></div>
-                </CardHeader>
-              </Card>
-            ))}
-          </div>
+          <LoadingState variant="grid" count={3} />
         ) : libraries && libraries.length > 0 ? (
           <div className="grid md:grid-cols-3 gap-4">
             {libraries.slice(0, 3).map((library) => (
@@ -122,15 +114,15 @@ export default function UserDashboard() {
             ))}
           </div>
         ) : (
-          <Card>
-            <CardContent className="py-12 text-center">
-              <Library className="h-12 w-12 text-muted mx-auto mb-4" />
-              <p className="text-foreground-secondary mb-4">No libraries yet</p>
-              <Link to="/library">
-                <Button>Browse Library</Button>
-              </Link>
-            </CardContent>
-          </Card>
+          <EmptyState
+            icon={Library}
+            title="No libraries yet"
+            description="Get started by browsing the content library or uploading your first reel."
+            action={{
+              label: "Browse Library",
+              href: "/library",
+            }}
+          />
         )}
       </div>
 
@@ -147,16 +139,7 @@ export default function UserDashboard() {
             </Link>
           </div>
           {reelsLoading ? (
-            <div className="space-y-4">
-              {[1, 2, 3].map((i) => (
-                <Card key={i} className="animate-pulse">
-                  <CardContent className="p-4">
-                    <div className="h-4 bg-muted rounded w-3/4"></div>
-                    <div className="h-3 bg-muted rounded w-1/2 mt-2"></div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+            <LoadingState variant="list" count={3} />
           ) : recentReels && recentReels.length > 0 ? (
             <div className="space-y-4">
               {recentReels.slice(0, 5).map((reel) => (
@@ -188,11 +171,11 @@ export default function UserDashboard() {
               ))}
             </div>
           ) : (
-            <Card>
-              <CardContent className="py-12 text-center">
-                <p className="text-foreground-secondary">No recent reels</p>
-              </CardContent>
-            </Card>
+            <EmptyState
+              title="No recent reels"
+              description="Reels you've watched recently will appear here."
+              size="sm"
+            />
           )}
         </div>
 
@@ -207,16 +190,7 @@ export default function UserDashboard() {
             </Link>
           </div>
           {coursesLoading ? (
-            <div className="space-y-4">
-              {[1, 2].map((i) => (
-                <Card key={i} className="animate-pulse">
-                  <CardContent className="p-4">
-                    <div className="h-4 bg-muted rounded w-3/4"></div>
-                    <div className="h-2 bg-muted rounded w-full mt-4"></div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+            <LoadingState variant="list" count={2} />
           ) : courses && courses.length > 0 ? (
             <div className="space-y-4">
               {courses.slice(0, 3).map((course) => (
@@ -241,15 +215,15 @@ export default function UserDashboard() {
               ))}
             </div>
           ) : (
-            <Card>
-              <CardContent className="py-12 text-center">
-                <BookOpen className="h-12 w-12 text-muted mx-auto mb-4" />
-                <p className="text-foreground-secondary mb-4">No courses in progress</p>
-                <Link to="/courses">
-                  <Button>Browse Courses</Button>
-                </Link>
-              </CardContent>
-            </Card>
+            <EmptyState
+              icon={BookOpen}
+              title="No courses in progress"
+              description="Start learning by enrolling in a course or creating your own."
+              action={{
+                label: "Browse Courses",
+                href: "/courses",
+              }}
+            />
           )}
         </div>
       </div>
