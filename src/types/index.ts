@@ -670,3 +670,106 @@ export interface MetadataValidationResult {
     message: string;
   }[];
 }
+
+// Search & Filter types
+export interface SearchResult {
+  id: string;
+  type: 'reel' | 'course' | 'transcript';
+  title: string;
+  description?: string;
+  snippet?: string; // Highlighted snippet from transcript
+  transcript_highlights?: TranscriptHighlight[];
+  thumbnail_url?: string;
+  duration?: number;
+  machine_model?: string;
+  tooling?: string;
+  tags: string[];
+  skill_level?: 'beginner' | 'intermediate' | 'advanced';
+  status: 'draft' | 'pending' | 'published' | 'archived';
+  relevance_score: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface TranscriptHighlight {
+  text: string;
+  start_time: number;
+  end_time: number;
+  confidence?: number;
+}
+
+export interface SearchFilters {
+  tags?: string[];
+  machine_model?: string[];
+  tooling?: string[];
+  skill_level?: ('beginner' | 'intermediate' | 'advanced')[];
+  status?: ('draft' | 'pending' | 'published' | 'archived')[];
+  customer_id?: string;
+  date_from?: string;
+  date_to?: string;
+  duration_min?: number;
+  duration_max?: number;
+  language?: string[];
+}
+
+export interface SearchQuery {
+  query: string;
+  filters?: SearchFilters;
+  sort_by?: 'relevance' | 'date' | 'duration' | 'title';
+  sort_order?: 'asc' | 'desc';
+  page?: number;
+  per_page?: number;
+}
+
+export interface SearchResponse {
+  results: SearchResult[];
+  total: number;
+  page: number;
+  per_page: number;
+  total_pages: number;
+  facets?: SearchFacets;
+  query_time_ms?: number;
+}
+
+export interface SearchFacets {
+  tags: FacetItem[];
+  machine_models: FacetItem[];
+  tooling: FacetItem[];
+  skill_levels: FacetItem[];
+  statuses: FacetItem[];
+  languages: FacetItem[];
+}
+
+export interface FacetItem {
+  value: string;
+  count: number;
+}
+
+export interface NLPSuggestion {
+  text: string;
+  type: 'query' | 'tag' | 'machine' | 'tooling';
+  confidence: number;
+  context?: string;
+}
+
+export interface NLPSuggestionsResponse {
+  suggestions: NLPSuggestion[];
+  query_enhancements?: string[];
+}
+
+export interface FilterOptions {
+  tags: string[];
+  machine_models: string[];
+  tooling: string[];
+  skill_levels: ('beginner' | 'intermediate' | 'advanced')[];
+  statuses: ('draft' | 'pending' | 'published' | 'archived')[];
+  languages: string[];
+  date_range?: {
+    min: string;
+    max: string;
+  };
+  duration_range?: {
+    min: number;
+    max: number;
+  };
+}

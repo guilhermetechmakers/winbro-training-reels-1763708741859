@@ -26,6 +26,7 @@ import TermsOfServicePage from "@/pages/TermsOfServicePage";
 import CookiePolicyPage from "@/pages/CookiePolicyPage";
 import NotFoundPage from "@/pages/NotFoundPage";
 import ErrorPage from "@/pages/ErrorPage";
+import SearchResultsPage from "@/pages/SearchResultsPage";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import SessionManagementPage from "@/pages/SessionManagementPage";
@@ -72,6 +73,14 @@ export default function App() {
               element={
                 <ProtectedRoute>
                   <ContentLibrary />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/search" 
+              element={
+                <ProtectedRoute>
+                  <SearchResultsPage />
                 </ProtectedRoute>
               } 
             />

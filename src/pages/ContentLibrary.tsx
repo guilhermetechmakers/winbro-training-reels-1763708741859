@@ -1,17 +1,18 @@
 import { useState, useEffect } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useSearchParams, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Search, Filter, Grid, List, Clock, Video } from "lucide-react";
+import { Filter, Grid, List, Clock, Video } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
+import { SearchBar } from "@/components/search/SearchBar";
 import type { Reel } from "@/types";
 import { LoadingState, EmptyState } from "@/components/states";
 
 export default function ContentLibrary() {
   const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState(searchParams.get("search") || "");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
 
@@ -27,6 +28,13 @@ export default function ContentLibrary() {
     queryKey: ["reels", searchQuery],
     queryFn: () => api.get<Reel[]>(`/reels?search=${searchQuery}`),
   });
+
+  // Handle search - navigate to search results page
+  const handleSearch = (query: string) => {
+    if (query.trim()) {
+      navigate(`/search?q=${encodeURIComponent(query)}`);
+    }
+  };
 
   return (
     <div className="space-y-6 animate-fade-in-up">
@@ -47,28 +55,17 @@ export default function ContentLibrary() {
       <Card>
         <CardContent className="p-4">
           <div className="flex flex-col md:flex-row gap-4">
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-foreground-secondary" />
-              <Input
-                type="search"
+            <div className="flex-1">
+              <SearchBar
                 placeholder="Search reels, transcripts, tags..."
-                value={searchQuery}
-                onChange={(e) => {
-                  const newQuery = e.target.value;
-                  setSearchQuery(newQuery);
-                  // Update URL params
-                  if (newQuery) {
-                    setSearchParams({ search: newQuery });
-                  } else {
-                    setSearchParams({});
-                  }
-                }}
-                className="pl-10"
+                initialValue={searchQuery}
+                onSearch={handleSearch}
+                showSuggestions={true}
               />
             </div>
-            <Button variant="outline">
+            <Button variant="outline" onClick={() => navigate("/search")}>
               <Filter className="mr-2 h-4 w-4" />
-              Filters
+              Advanced Filters
             </Button>
             <div className="flex gap-2">
               <Button

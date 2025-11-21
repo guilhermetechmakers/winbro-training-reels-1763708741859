@@ -1,6 +1,5 @@
-import { Search, Bell, LogOut, Settings, Monitor } from "lucide-react";
+import { Bell, LogOut, Settings, Monitor } from "lucide-react";
 import { Link } from "react-router-dom";
-import { Input } from "@/components/ui/input";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -11,6 +10,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { SearchBar } from "@/components/search/SearchBar";
 import { useCurrentUser, useLogout } from "@/hooks/use-auth";
 
 export default function TopNav() {
@@ -26,14 +26,10 @@ export default function TopNav() {
     <header className="h-16 border-b border-border bg-white flex items-center justify-between px-6">
       {/* Global Search */}
       <div className="flex-1 max-w-2xl">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-foreground-secondary" />
-          <Input
-            type="search"
-            placeholder="Search reels, transcripts, courses..."
-            className="pl-10 w-full"
-          />
-        </div>
+        <SearchBar
+          placeholder="Search reels, transcripts, courses..."
+          showSuggestions={true}
+        />
       </div>
 
       {/* Right side actions */}

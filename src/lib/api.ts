@@ -506,6 +506,130 @@ export const videoUploadApi = {
     api.post<{ message: string }>(`/videos/processing/${jobId}/cancel`, {}),
 };
 
+// Search & Filter API functions
+export const searchApi = {
+  // Perform search with query and filters
+  search: (query: import("@/types").SearchQuery): Promise<import("@/types").SearchResponse> => {
+    const params = new URLSearchParams();
+    params.append('q', query.query);
+    
+    if (query.filters) {
+      if (query.filters.tags?.length) {
+        query.filters.tags.forEach(tag => params.append('tags', tag));
+      }
+      if (query.filters.machine_model?.length) {
+        query.filters.machine_model.forEach(model => params.append('machine_model', model));
+      }
+      if (query.filters.tooling?.length) {
+        query.filters.tooling.forEach(tool => params.append('tooling', tool));
+      }
+      if (query.filters.skill_level?.length) {
+        query.filters.skill_level.forEach(level => params.append('skill_level', level));
+      }
+      if (query.filters.status?.length) {
+        query.filters.status.forEach(status => params.append('status', status));
+      }
+      if (query.filters.customer_id) {
+        params.append('customer_id', query.filters.customer_id);
+      }
+      if (query.filters.date_from) {
+        params.append('date_from', query.filters.date_from);
+      }
+      if (query.filters.date_to) {
+        params.append('date_to', query.filters.date_to);
+      }
+      if (query.filters.duration_min !== undefined) {
+        params.append('duration_min', query.filters.duration_min.toString());
+      }
+      if (query.filters.duration_max !== undefined) {
+        params.append('duration_max', query.filters.duration_max.toString());
+      }
+      if (query.filters.language?.length) {
+        query.filters.language.forEach(lang => params.append('language', lang));
+      }
+    }
+    
+    if (query.sort_by) {
+      params.append('sort_by', query.sort_by);
+    }
+    if (query.sort_order) {
+      params.append('sort_order', query.sort_order);
+    }
+    if (query.page) {
+      params.append('page', query.page.toString());
+    }
+    if (query.per_page) {
+      params.append('per_page', query.per_page.toString());
+    }
+    
+    return api.get<import("@/types").SearchResponse>(`/search?${params.toString()}`);
+  },
+
+  // Get NLP-powered search suggestions
+  getSuggestions: (query: string, limit?: number): Promise<import("@/types").NLPSuggestionsResponse> => {
+    const params = new URLSearchParams();
+    params.append('q', query);
+    if (limit) {
+      params.append('limit', limit.toString());
+    }
+    return api.get<import("@/types").NLPSuggestionsResponse>(`/search/suggestions?${params.toString()}`);
+  },
+
+  // Get available filter options
+  getFilterOptions: (customerId?: string): Promise<import("@/types").FilterOptions> => {
+    const params = new URLSearchParams();
+    if (customerId) {
+      params.append('customer_id', customerId);
+    }
+    const query = params.toString();
+    return api.get<import("@/types").FilterOptions>(`/search/filters${query ? `?${query}` : ''}`);
+  },
+
+  // Get search facets (for filter counts)
+  getFacets: (query: string, filters?: import("@/types").SearchFilters): Promise<import("@/types").SearchFacets> => {
+    const params = new URLSearchParams();
+    params.append('q', query);
+    
+    if (filters) {
+      if (filters.tags?.length) {
+        filters.tags.forEach(tag => params.append('tags', tag));
+      }
+      if (filters.machine_model?.length) {
+        filters.machine_model.forEach(model => params.append('machine_model', model));
+      }
+      if (filters.tooling?.length) {
+        filters.tooling.forEach(tool => params.append('tooling', tool));
+      }
+      if (filters.skill_level?.length) {
+        filters.skill_level.forEach(level => params.append('skill_level', level));
+      }
+      if (filters.status?.length) {
+        filters.status.forEach(status => params.append('status', status));
+      }
+      if (filters.customer_id) {
+        params.append('customer_id', filters.customer_id);
+      }
+      if (filters.date_from) {
+        params.append('date_from', filters.date_from);
+      }
+      if (filters.date_to) {
+        params.append('date_to', filters.date_to);
+      }
+      if (filters.duration_min !== undefined) {
+        params.append('duration_min', filters.duration_min.toString());
+      }
+      if (filters.duration_max !== undefined) {
+        params.append('duration_max', filters.duration_max.toString());
+      }
+      if (filters.language?.length) {
+        filters.language.forEach(lang => params.append('language', lang));
+      }
+    }
+    
+    return api.get<import("@/types").SearchFacets>(`/search/facets?${params.toString()}`);
+  },
+};
+
 // Structured Metadata & Tagging API functions
 export const metadataApi = {
   // Machine Models
