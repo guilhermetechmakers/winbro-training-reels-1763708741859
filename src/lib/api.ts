@@ -505,3 +505,80 @@ export const videoUploadApi = {
   cancelProcessing: (jobId: string): Promise<{ message: string }> =>
     api.post<{ message: string }>(`/videos/processing/${jobId}/cancel`, {}),
 };
+
+// Structured Metadata & Tagging API functions
+export const metadataApi = {
+  // Machine Models
+  getMachineModels: (customerId?: string): Promise<import("@/types").MachineModel[]> => {
+    const params = new URLSearchParams();
+    if (customerId) params.append('customer_id', customerId);
+    const query = params.toString();
+    return api.get<import("@/types").MachineModel[]>(`/metadata/machine-models${query ? `?${query}` : ''}`);
+  },
+  createMachineModel: (data: { name: string; description?: string; customer_id?: string }): Promise<import("@/types").MachineModel> =>
+    api.post<import("@/types").MachineModel>('/metadata/machine-models', data),
+  updateMachineModel: (id: string, data: { name?: string; description?: string }): Promise<import("@/types").MachineModel> =>
+    api.put<import("@/types").MachineModel>(`/metadata/machine-models/${id}`, data),
+  deleteMachineModel: (id: string): Promise<void> =>
+    api.delete(`/metadata/machine-models/${id}`),
+
+  // Tooling
+  getTooling: (customerId?: string): Promise<import("@/types").Tooling[]> => {
+    const params = new URLSearchParams();
+    if (customerId) params.append('customer_id', customerId);
+    const query = params.toString();
+    return api.get<import("@/types").Tooling[]>(`/metadata/tooling${query ? `?${query}` : ''}`);
+  },
+  createTooling: (data: { name: string; description?: string; customer_id?: string }): Promise<import("@/types").Tooling> =>
+    api.post<import("@/types").Tooling>('/metadata/tooling', data),
+  updateTooling: (id: string, data: { name?: string; description?: string }): Promise<import("@/types").Tooling> =>
+    api.put<import("@/types").Tooling>(`/metadata/tooling/${id}`, data),
+  deleteTooling: (id: string): Promise<void> =>
+    api.delete(`/metadata/tooling/${id}`),
+
+  // Process Steps
+  getProcessSteps: (customerId?: string): Promise<import("@/types").ProcessStep[]> => {
+    const params = new URLSearchParams();
+    if (customerId) params.append('customer_id', customerId);
+    const query = params.toString();
+    return api.get<import("@/types").ProcessStep[]>(`/metadata/process-steps${query ? `?${query}` : ''}`);
+  },
+  createProcessStep: (data: { name: string; description?: string; customer_id?: string }): Promise<import("@/types").ProcessStep> =>
+    api.post<import("@/types").ProcessStep>('/metadata/process-steps', data),
+  updateProcessStep: (id: string, data: { name?: string; description?: string }): Promise<import("@/types").ProcessStep> =>
+    api.put<import("@/types").ProcessStep>(`/metadata/process-steps/${id}`, data),
+  deleteProcessStep: (id: string): Promise<void> =>
+    api.delete(`/metadata/process-steps/${id}`),
+
+  // Reel Metadata
+  getReelMetadata: (reelId: string): Promise<import("@/types").ReelMetadata> =>
+    api.get<import("@/types").ReelMetadata>(`/metadata/reels/${reelId}`),
+  updateReelMetadata: (reelId: string, data: {
+    machine_model_id?: string;
+    tooling_id?: string;
+    process_step_id?: string;
+    tags?: string[];
+  }): Promise<import("@/types").ReelMetadata> =>
+    api.put<import("@/types").ReelMetadata>(`/metadata/reels/${reelId}`, data),
+  createReelMetadata: (reelId: string, data: {
+    machine_model_id?: string;
+    tooling_id?: string;
+    process_step_id?: string;
+    tags?: string[];
+  }): Promise<import("@/types").ReelMetadata> =>
+    api.post<import("@/types").ReelMetadata>(`/metadata/reels/${reelId}`, data),
+
+  // NLP Tag Suggestions
+  getTagSuggestions: (data: import("@/types").NLPTagSuggestionsRequest): Promise<import("@/types").NLPTagSuggestionsResponse> =>
+    api.post<import("@/types").NLPTagSuggestionsResponse>('/metadata/nlp/suggest-tags', data),
+
+  // Metadata Validation
+  validateMetadata: (data: {
+    machine_model_id?: string;
+    tooling_id?: string;
+    process_step_id?: string;
+    tags?: string[];
+    require_all?: boolean;
+  }): Promise<import("@/types").MetadataValidationResult> =>
+    api.post<import("@/types").MetadataValidationResult>('/metadata/validate', data),
+};

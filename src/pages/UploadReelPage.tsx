@@ -11,10 +11,13 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ResumableUploader } from "@/components/video/ResumableUploader";
 import { ProcessingQueue } from "@/components/video/ProcessingQueue";
+import { MetadataForm } from "@/components/metadata/MetadataForm";
 import { useVideoUpload } from "@/hooks/use-video-upload";
+import { useCreateReelMetadata } from "@/hooks/use-metadata";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import type { MetadataFormData } from "@/components/metadata/MetadataForm";
 
 const uploadSchema = z.object({
   title: z.string().min(1, "Title is required"),
@@ -34,7 +37,9 @@ type UploadForm = z.infer<typeof uploadSchema>;
 export default function UploadReelPage() {
   const navigate = useNavigate();
   const [file, setFile] = useState<File | null>(null);
+  const [structuredMetadata, setStructuredMetadata] = useState<MetadataFormData | null>(null);
   const { uploadId, handleUploadComplete, completeUpload, isCompleting, processingJob } = useVideoUpload();
+  const createMetadataMutation = useCreateReelMetadata();
 
   const {
     register,
@@ -73,10 +78,16 @@ export default function UploadReelPage() {
       return;
     }
 
-    // Convert tags string to array
-    const tags = data.tags
+    // Convert tags string to array (legacy tags field)
+    const legacyTags = data.tags
       ? data.tags.split(",").map((tag) => tag.trim()).filter(Boolean)
       : undefined;
+
+    // Merge structured metadata tags with legacy tags if available
+    const allTags = [
+      ...(structuredMetadata?.tags || []),
+      ...(legacyTags || []),
+    ].filter((tag, index, self) => self.indexOf(tag) === index); // Remove duplicates
 
     const metadata = {
       title: data.title,
@@ -84,7 +95,7 @@ export default function UploadReelPage() {
       machine_model: data.machine_model,
       tooling: data.tooling,
       process_step: data.process_step,
-      tags,
+      tags: allTags.length > 0 ? allTags : undefined,
       skill_level: data.skill_level,
       language: data.language,
       auto_transcribe: data.auto_transcribe,
@@ -92,6 +103,11 @@ export default function UploadReelPage() {
     };
 
     completeUpload(metadata);
+  };
+
+  const handleMetadataSubmit = async (metadataData: MetadataFormData) => {
+    setStructuredMetadata(metadataData);
+    toast.success("Structured metadata saved");
   };
 
   const handleProcessingComplete = (_jobId: string, reelId?: string) => {
@@ -210,7 +226,7 @@ export default function UploadReelPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="tags">Tags (comma-separated)</Label>
+                  <Label htmlFor="tags">Additional Tags (comma-separated, optional)</Label>
                   <Input
                     id="tags"
                     {...register("tags")}
@@ -218,7 +234,7 @@ export default function UploadReelPage() {
                     className="bg-white"
                   />
                   <p className="text-xs text-foreground-secondary">
-                    Separate multiple tags with commas
+                    Separate multiple tags with commas. Use structured metadata below for better organization.
                   </p>
                 </div>
 
@@ -279,6 +295,16 @@ export default function UploadReelPage() {
                 </div>
               </CardContent>
             </Card>
+
+            {/* Structured Metadata Form */}
+            <MetadataForm
+              customerId={watch("customer_scope")}
+              requireAll={false}
+              title={watch("title")}
+              description={watch("description")}
+              onSubmit={handleMetadataSubmit}
+              isLoading={createMetadataMutation.isPending}
+            />
 
             <div className="flex justify-end gap-4">
               <Button

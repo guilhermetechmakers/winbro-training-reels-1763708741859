@@ -32,6 +32,9 @@ import type { Reel, ReprocessJob } from "@/types";
 import { TranscriptEditor } from "@/components/reels/TranscriptEditor";
 import { VersionHistoryModal } from "@/components/reels/VersionHistoryModal";
 import { PermissionDialog } from "@/components/reels/PermissionDialog";
+import { MetadataForm } from "@/components/metadata/MetadataForm";
+import { useReelMetadata, useUpdateReelMetadata, useCreateReelMetadata } from "@/hooks/use-metadata";
+import type { MetadataFormData } from "@/components/metadata/MetadataForm";
 
 const metadataSchema = z.object({
   title: z.string().min(1, "Title is required"),
@@ -54,6 +57,11 @@ export default function EditReelPage() {
   const [isVersionModalOpen, setIsVersionModalOpen] = useState(false);
   const [isPermissionDialogOpen, setIsPermissionDialogOpen] = useState(false);
   const [reprocessJobId, setReprocessJobId] = useState<string | null>(null);
+  
+  // Fetch structured metadata
+  const { data: reelMetadata, isLoading: isLoadingMetadata } = useReelMetadata(id);
+  const updateMetadataMutation = useUpdateReelMetadata();
+  const createMetadataMutation = useCreateReelMetadata();
 
   // Fetch reel data
   const { data: reel, isLoading: isLoadingReel } = useQuery({
@@ -128,8 +136,8 @@ export default function EditReelPage() {
     }
   }, [reel, reset]);
 
-  // Update metadata mutation
-  const updateMetadataMutation = useMutation({
+  // Update basic metadata mutation (for title, description, etc.)
+  const updateBasicMetadataMutation = useMutation({
     mutationFn: (data: Partial<Reel>) => reelsApi.updateReel(id!, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["reel", id] });
@@ -170,7 +178,7 @@ export default function EditReelPage() {
       ? data.tags.split(",").map((tag) => tag.trim()).filter(Boolean)
       : [];
 
-    updateMetadataMutation.mutate({
+    updateBasicMetadataMutation.mutate({
       title: data.title,
       description: data.description,
       machine_model: data.machine_model || undefined,
@@ -387,12 +395,15 @@ export default function EditReelPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="tags">Tags (comma-separated)</Label>
+                  <Label htmlFor="tags">Additional Tags (comma-separated, optional)</Label>
                   <Input
                     id="tags"
                     {...register("tags")}
                     placeholder="setup, maintenance, safety"
                   />
+                  <p className="text-xs text-foreground-secondary">
+                    Use structured metadata below for better organization.
+                  </p>
                 </div>
 
                 <div className="grid md:grid-cols-2 gap-4">
@@ -438,9 +449,9 @@ export default function EditReelPage() {
                   </Button>
                   <Button
                     type="submit"
-                    disabled={!isDirty || updateMetadataMutation.isPending}
+                    disabled={!isDirty || updateBasicMetadataMutation.isPending}
                   >
-                    {updateMetadataMutation.isPending ? (
+                    {updateBasicMetadataMutation.isPending ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                         Saving...
@@ -456,6 +467,53 @@ export default function EditReelPage() {
               </form>
             </CardContent>
           </Card>
+
+          {/* Structured Metadata Form */}
+          {isLoadingMetadata ? (
+            <Card>
+              <CardContent className="py-12">
+                <div className="flex items-center justify-center">
+                  <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                </div>
+              </CardContent>
+            </Card>
+          ) : (
+            <MetadataForm
+              initialData={
+                reelMetadata
+                  ? {
+                      machine_model_id: reelMetadata.machine_model_id || undefined,
+                      tooling_id: reelMetadata.tooling_id || undefined,
+                      process_step_id: reelMetadata.process_step_id || undefined,
+                      tags: reelMetadata.tags || [],
+                    }
+                  : undefined
+              }
+              customerId={reel?.customer_id}
+              requireAll={false}
+              title={watch("title")}
+              description={watch("description")}
+              transcript={transcript?.text}
+              onSubmit={async (metadataData: MetadataFormData) => {
+                if (id) {
+                  if (reelMetadata) {
+                    // Update existing metadata
+                    updateMetadataMutation.mutate({
+                      reelId: id,
+                      data: metadataData,
+                    });
+                  } else {
+                    // Create new metadata if it doesn't exist
+                    createMetadataMutation.mutate({
+                      reelId: id,
+                      data: metadataData,
+                    });
+                  }
+                }
+              }}
+              isLoading={updateMetadataMutation.isPending || createMetadataMutation.isPending}
+            />
+          )}
 
           {/* Reprocess Section */}
           <Card>

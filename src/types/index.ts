@@ -598,3 +598,75 @@ export interface VideoMetadata {
   auto_transcribe: boolean;
   customer_scope?: string;
 }
+
+// Structured Metadata & Tagging types
+export interface MachineModel {
+  id: string;
+  name: string;
+  description?: string;
+  customer_id?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Tooling {
+  id: string;
+  name: string;
+  description?: string;
+  customer_id?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ProcessStep {
+  id: string;
+  name: string;
+  description?: string;
+  customer_id?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ReelMetadata {
+  id: string;
+  reel_id: string;
+  machine_model_id?: string;
+  tooling_id?: string;
+  process_step_id?: string;
+  tags: string[];
+  customer_id?: string;
+  created_at: string;
+  updated_at: string;
+  machine_model?: MachineModel;
+  tooling?: Tooling;
+  process_step?: ProcessStep;
+}
+
+export interface TagSuggestion {
+  tag: string;
+  confidence: number;
+  source: 'transcript' | 'title' | 'description' | 'nlp';
+}
+
+export interface NLPTagSuggestionsRequest {
+  title?: string;
+  description?: string;
+  transcript?: string;
+  existing_tags?: string[];
+}
+
+export interface NLPTagSuggestionsResponse {
+  suggestions: TagSuggestion[];
+}
+
+export interface MetadataValidationResult {
+  valid: boolean;
+  errors: {
+    field: string;
+    message: string;
+  }[];
+  warnings?: {
+    field: string;
+    message: string;
+  }[];
+}
