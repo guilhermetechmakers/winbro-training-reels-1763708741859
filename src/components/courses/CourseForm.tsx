@@ -1,6 +1,7 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -13,13 +14,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
+import { api } from "@/lib/api";
 import type { Course } from "@/types";
 
 const courseSchema = z.object({
   title: z.string().min(1, "Title is required").max(200, "Title too long"),
   description: z.string().min(1, "Description is required").max(2000, "Description too long"),
   target_roles: z.array(z.string()).min(1, "At least one target role is required"),
-  prerequisites: z.array(z.string()).optional(),
+  prerequisites: z.array(z.string()).optional().default([]),
   estimated_time: z.number().min(1, "Estimated time must be at least 1 minute"),
   status: z.enum(["draft", "published", "archived"]),
 });
@@ -64,6 +66,7 @@ export function CourseForm({ course, onSubmit, onCancel, isLoading }: CourseForm
   });
 
   const targetRoles = watch("target_roles") || [];
+  const prerequisites = watch("prerequisites") || [];
 
   const toggleRole = (role: string) => {
     const current = targetRoles;
@@ -73,6 +76,12 @@ export function CourseForm({ course, onSubmit, onCancel, isLoading }: CourseForm
       setValue("target_roles", [...current, role]);
     }
   };
+
+  // Fetch available courses for prerequisites
+  const { data: availableCourses } = useQuery({
+    queryKey: ["courses", "published"],
+    queryFn: () => api.get<Course[]>("/courses?status=published"),
+  });
 
 
   return (
@@ -125,6 +134,50 @@ export function CourseForm({ course, onSubmit, onCancel, isLoading }: CourseForm
         </div>
         {errors.target_roles && (
           <p className="text-sm text-destructive">{errors.target_roles.message}</p>
+        )}
+      </div>
+
+      <div className="space-y-2">
+        <Label>Prerequisites (Optional)</Label>
+        {availableCourses && availableCourses.length > 0 ? (
+          <div className="flex flex-wrap gap-2">
+            {availableCourses
+              .filter((c) => !course || c.id !== course.id)
+              .map((prereqCourse) => (
+                <div key={prereqCourse.id} className="flex items-center space-x-2">
+                  <Checkbox
+                    id={`prereq-${prereqCourse.id}`}
+                    checked={prerequisites.includes(prereqCourse.id)}
+                    onCheckedChange={(checked) => {
+                      const current = prerequisites;
+                      if (checked) {
+                        setValue("prerequisites", [...current, prereqCourse.id]);
+                      } else {
+                        setValue(
+                          "prerequisites",
+                          current.filter((id) => id !== prereqCourse.id)
+                        );
+                      }
+                    }}
+                  />
+                  <Label
+                    htmlFor={`prereq-${prereqCourse.id}`}
+                    className="text-sm font-normal cursor-pointer"
+                  >
+                    {prereqCourse.title}
+                  </Label>
+                </div>
+              ))}
+          </div>
+        ) : (
+          <p className="text-sm text-muted-foreground">
+            No published courses available for prerequisites.
+          </p>
+        )}
+        {prerequisites.length > 0 && (
+          <p className="text-xs text-muted-foreground">
+            {prerequisites.length} prerequisite{prerequisites.length !== 1 ? "s" : ""} selected
+          </p>
         )}
       </div>
 

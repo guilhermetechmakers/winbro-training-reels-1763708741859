@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Plus, Edit, Trash2, Eye, BookOpen } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Plus, Edit, Trash2, Eye, BookOpen, Save, Archive, Play } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -12,6 +12,16 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   Tabs,
   TabsContent,
   TabsList,
@@ -21,6 +31,8 @@ import { CourseForm } from "@/components/courses/CourseForm";
 import { ModuleListEditor } from "@/components/courses/ModuleListEditor";
 import { QuizEditor } from "@/components/courses/QuizEditor";
 import { EnrollmentManagement } from "@/components/courses/EnrollmentManagement";
+import { CoursePreview } from "@/components/courses/CoursePreview";
+import { PublishingSettingsPanel } from "@/components/courses/PublishingSettingsPanel";
 import {
   useCourses,
   useCreateCourse,
@@ -38,13 +50,20 @@ import {
 import { useQuiz, useUpsertQuiz, useDeleteQuiz } from "@/hooks/use-quizzes";
 import { LoadingState, EmptyState } from "@/components/states";
 import { format } from "date-fns";
+import { toast } from "sonner";
 import type { Course, CourseModule } from "@/types";
 
 export default function CourseBuilderPage() {
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isPublishDialogOpen, setIsPublishDialogOpen] = useState(false);
+  const [isArchiveDialogOpen, setIsArchiveDialogOpen] = useState(false);
+  const [courseToDelete, setCourseToDelete] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("overview");
+  const [lastSaved, setLastSaved] = useState<Date | null>(null);
 
   const { data: courses, isLoading } = useCourses();
   const createCourse = useCreateCourse();
@@ -58,6 +77,16 @@ export default function CourseBuilderPage() {
   const enrollUser = useEnrollUser();
   const unenrollUser = useUnenrollUser();
   const bulkEnroll = useBulkEnroll();
+
+  // Show last saved indicator
+  useEffect(() => {
+    if (lastSaved) {
+      const timer = setTimeout(() => {
+        setLastSaved(null);
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [lastSaved]);
 
   const handleCreateCourse = async (data: {
     title: string;
@@ -75,6 +104,7 @@ export default function CourseBuilderPage() {
       setIsCreateDialogOpen(false);
       setSelectedCourse(newCourse);
       setActiveTab("modules");
+      toast.success("Course created successfully");
     } catch (error) {
       // Error handled by hook
     }
@@ -89,19 +119,68 @@ export default function CourseBuilderPage() {
       });
       setSelectedCourse(updated);
       setIsEditDialogOpen(false);
+      setLastSaved(new Date());
+      toast.success("Course updated successfully");
+    } catch (error) {
+      // Error handled by hook
+    }
+  };
+
+  const handleSaveDraft = async () => {
+    if (!selectedCourse) return;
+    try {
+      await updateCourse.mutateAsync({
+        id: selectedCourse.id,
+        data: { status: "draft" },
+      });
+      setLastSaved(new Date());
+      toast.success("Draft saved");
+    } catch (error) {
+      toast.error("Failed to save draft");
+    }
+  };
+
+  const handlePublishCourse = async () => {
+    if (!selectedCourse) return;
+    try {
+      await publishCourse.mutateAsync(selectedCourse.id);
+      // Refresh course data
+      const updated = await updateCourse.mutateAsync({
+        id: selectedCourse.id,
+        data: {},
+      });
+      setSelectedCourse(updated);
+      setIsPublishDialogOpen(false);
+    } catch (error) {
+      // Error handled by hook
+    }
+  };
+
+  const handleArchiveCourse = async () => {
+    if (!selectedCourse) return;
+    try {
+      await archiveCourse.mutateAsync(selectedCourse.id);
+      // Refresh course data
+      const updated = await updateCourse.mutateAsync({
+        id: selectedCourse.id,
+        data: {},
+      });
+      setSelectedCourse(updated);
+      setIsArchiveDialogOpen(false);
     } catch (error) {
       // Error handled by hook
     }
   };
 
   const handleDeleteCourse = async (courseId: string) => {
-    if (!confirm("Are you sure you want to delete this course?")) return;
     try {
       await deleteCourse.mutateAsync(courseId);
       if (selectedCourse?.id === courseId) {
         setSelectedCourse(null);
         setActiveTab("overview");
       }
+      setIsDeleteDialogOpen(false);
+      setCourseToDelete(null);
     } catch (error) {
       // Error handled by hook
     }
@@ -164,6 +243,29 @@ export default function CourseBuilderPage() {
     }
   };
 
+  const handlePublishingSettingsSave = async (data: {
+    visibility: string;
+    enrollment_method: string;
+    expiration_date?: string;
+    auto_enroll?: boolean;
+  }) => {
+    if (!selectedCourse) return;
+    try {
+      await updateCourse.mutateAsync({
+        id: selectedCourse.id,
+        data: data as Partial<Course>,
+      });
+      // Refresh course data
+      const updated = await updateCourse.mutateAsync({
+        id: selectedCourse.id,
+        data: {},
+      });
+      setSelectedCourse(updated);
+    } catch (error) {
+      toast.error("Failed to save publishing settings");
+    }
+  };
+
   const getStatusBadge = (status: Course["status"]) => {
     const variants: Record<
       Course["status"],
@@ -177,18 +279,25 @@ export default function CourseBuilderPage() {
     return <Badge className={config.className}>{config.label}</Badge>;
   };
 
+  // Course detail view
   if (selectedCourse) {
     return (
       <div className="space-y-6 animate-fade-in-up">
+        {/* Header */}
         <div className="flex items-center justify-between">
-          <div>
-            <div className="flex items-center gap-3">
+          <div className="flex-1">
+            <div className="flex items-center gap-3 mb-2">
               <h1 className="text-3xl font-bold text-foreground-primary">
                 {selectedCourse.title}
               </h1>
               {getStatusBadge(selectedCourse.status)}
+              {lastSaved && (
+                <span className="text-xs text-muted-foreground animate-fade-in">
+                  Saved {format(lastSaved, "HH:mm:ss")}
+                </span>
+              )}
             </div>
-            <p className="text-foreground-secondary mt-1">
+            <p className="text-foreground-secondary">
               {selectedCourse.description}
             </p>
           </div>
@@ -209,30 +318,50 @@ export default function CourseBuilderPage() {
               <Edit className="h-4 w-4 mr-2" />
               Edit
             </Button>
+            <Button
+              variant="outline"
+              onClick={() => setIsPreviewOpen(true)}
+            >
+              <Play className="h-4 w-4 mr-2" />
+              Preview
+            </Button>
             {selectedCourse.status === "draft" && (
-              <Button
-                onClick={() => publishCourse.mutate(selectedCourse.id)}
-                disabled={publishCourse.isPending}
-              >
-                Publish
-              </Button>
+              <>
+                <Button
+                  variant="outline"
+                  onClick={handleSaveDraft}
+                  disabled={updateCourse.isPending}
+                >
+                  <Save className="h-4 w-4 mr-2" />
+                  Save Draft
+                </Button>
+                <Button
+                  onClick={() => setIsPublishDialogOpen(true)}
+                  disabled={publishCourse.isPending}
+                >
+                  Publish
+                </Button>
+              </>
             )}
             {selectedCourse.status === "published" && (
               <Button
                 variant="outline"
-                onClick={() => archiveCourse.mutate(selectedCourse.id)}
+                onClick={() => setIsArchiveDialogOpen(true)}
                 disabled={archiveCourse.isPending}
               >
+                <Archive className="h-4 w-4 mr-2" />
                 Archive
               </Button>
             )}
           </div>
         </div>
 
+        {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList>
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="modules">Modules</TabsTrigger>
+            <TabsTrigger value="publishing">Publishing</TabsTrigger>
             <TabsTrigger value="enrollments">Enrollments</TabsTrigger>
           </TabsList>
 
@@ -269,6 +398,21 @@ export default function CourseBuilderPage() {
                       {format(new Date(selectedCourse.created_at), "MMM d, yyyy")}
                     </p>
                   </div>
+                  {selectedCourse.prerequisites && selectedCourse.prerequisites.length > 0 && (
+                    <div className="col-span-2">
+                      <p className="text-sm font-medium text-muted-foreground">Prerequisites</p>
+                      <div className="flex flex-wrap gap-1 mt-1">
+                        {selectedCourse.prerequisites.map((prereqId) => {
+                          const prereqCourse = courses?.find((c) => c.id === prereqId);
+                          return prereqCourse ? (
+                            <Badge key={prereqId} variant="outline">
+                              {prereqCourse.title}
+                            </Badge>
+                          ) : null;
+                        })}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -290,11 +434,18 @@ export default function CourseBuilderPage() {
                     <ModuleQuizEditor
                       key={module.id}
                       module={module}
-                      courseId={selectedCourse.id}
                     />
                   ))}
               </div>
             )}
+          </TabsContent>
+
+          <TabsContent value="publishing" className="space-y-4">
+            <PublishingSettingsPanel
+              course={selectedCourse}
+              onSave={handlePublishingSettingsSave}
+              isLoading={updateCourse.isPending}
+            />
           </TabsContent>
 
           <TabsContent value="enrollments">
@@ -336,10 +487,57 @@ export default function CourseBuilderPage() {
             />
           </DialogContent>
         </Dialog>
+
+        {/* Preview Dialog */}
+        {isPreviewOpen && selectedCourse && (
+          <CoursePreview
+            course={selectedCourse}
+            onClose={() => setIsPreviewOpen(false)}
+          />
+        )}
+
+        {/* Publish Confirmation Dialog */}
+        <AlertDialog open={isPublishDialogOpen} onOpenChange={setIsPublishDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Publish Course</AlertDialogTitle>
+              <AlertDialogDescription>
+                Are you sure you want to publish this course? Once published, it will be visible
+                to users based on your publishing settings.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={handlePublishCourse}>
+                Publish
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        {/* Archive Confirmation Dialog */}
+        <AlertDialog open={isArchiveDialogOpen} onOpenChange={setIsArchiveDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Archive Course</AlertDialogTitle>
+              <AlertDialogDescription>
+                Are you sure you want to archive this course? Archived courses will no longer be
+                available for new enrollments but existing enrollments will remain active.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={handleArchiveCourse}>
+                Archive
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     );
   }
 
+  // Course list view
   return (
     <div className="space-y-6 animate-fade-in-up">
       <div className="flex items-center justify-between">
@@ -441,7 +639,8 @@ export default function CourseBuilderPage() {
                     size="sm"
                     onClick={(e) => {
                       e.stopPropagation();
-                      handleDeleteCourse(course.id);
+                      setCourseToDelete(course.id);
+                      setIsDeleteDialogOpen(true);
                     }}
                     className="text-destructive hover:text-destructive"
                   >
@@ -453,12 +652,35 @@ export default function CourseBuilderPage() {
           ))}
         </div>
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Course</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this course? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setCourseToDelete(null)}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => courseToDelete && handleDeleteCourse(courseToDelete)}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
 
 // Module Quiz Editor Component
-function ModuleQuizEditor({ module }: { module: CourseModule; courseId: string }) {
+function ModuleQuizEditor({ module }: { module: CourseModule }) {
   const { data: quiz } = useQuiz(module.id);
   const upsertQuiz = useUpsertQuiz();
   const deleteQuiz = useDeleteQuiz();
