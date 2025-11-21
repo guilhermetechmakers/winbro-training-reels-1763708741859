@@ -179,3 +179,71 @@ export interface ReelPermission {
   created_at: string;
   updated_at: string;
 }
+
+export interface SubscriptionPlan {
+  id: string;
+  name: string;
+  description: string;
+  price: number; // monthly price in USD
+  billing_interval: 'monthly' | 'yearly';
+  features: string[];
+  max_users?: number;
+  max_reels?: number;
+  max_storage_gb?: number;
+  is_popular?: boolean;
+}
+
+export interface PromoCode {
+  id: string;
+  code: string;
+  discount_type: 'percentage' | 'fixed';
+  discount_value: number;
+  expiration_date?: string;
+  usage_limit?: number;
+  usage_count: number;
+  is_active: boolean;
+}
+
+export interface InvoicePreview {
+  subtotal: number;
+  discount: number;
+  tax: number;
+  total: number;
+  currency: string;
+  billing_period: string;
+  promo_code?: string;
+}
+
+export interface CheckoutData {
+  plan_id: string;
+  billing_details: {
+    company_name: string;
+    billing_address: {
+      street: string;
+      city: string;
+      state: string;
+      zip_code: string;
+      country: string;
+    };
+    tax_id?: string;
+  };
+  payment_method_id?: string;
+  payment_method?: {
+    card_number: string;
+    expiry_month: string;
+    expiry_year: string;
+    cvv: string;
+    cardholder_name: string;
+  };
+  promo_code?: string;
+  save_payment_method: boolean;
+  terms_accepted: boolean;
+}
+
+export interface CheckoutResponse {
+  transaction_id: string;
+  subscription_id: string;
+  invoice_id: string;
+  success: boolean;
+  message: string;
+}

@@ -124,3 +124,21 @@ export const reelsApi = {
   updatePermissions: (reelId: string, data: { visibility: 'tenant' | 'public' | 'internal'; access_level?: 'view' | 'edit' | 'admin' }): Promise<import("@/types").ReelPermission> =>
     api.put<import("@/types").ReelPermission>(`/reels/${reelId}/permissions`, data),
 };
+
+// Checkout and subscription API functions
+export const checkoutApi = {
+  getPlans: (): Promise<import("@/types").SubscriptionPlan[]> => 
+    api.get<import("@/types").SubscriptionPlan[]>('/subscriptions/plans'),
+  getPlan: (id: string): Promise<import("@/types").SubscriptionPlan> => 
+    api.get<import("@/types").SubscriptionPlan>(`/subscriptions/plans/${id}`),
+  validatePromoCode: (code: string, planId: string): Promise<import("@/types").PromoCode> => 
+    api.post<import("@/types").PromoCode>('/checkout/validate-promo', { code, plan_id: planId }),
+  generateInvoicePreview: (planId: string, promoCode?: string): Promise<import("@/types").InvoicePreview> => {
+    const params = new URLSearchParams();
+    params.append('plan_id', planId);
+    if (promoCode) params.append('promo_code', promoCode);
+    return api.get<import("@/types").InvoicePreview>(`/checkout/invoice-preview?${params.toString()}`);
+  },
+  processCheckout: (data: import("@/types").CheckoutData): Promise<import("@/types").CheckoutResponse> => 
+    api.post<import("@/types").CheckoutResponse>('/checkout/process', data),
+};
