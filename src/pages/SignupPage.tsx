@@ -1,5 +1,4 @@
-import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery } from "@tanstack/react-query";
@@ -9,9 +8,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
-import { toast } from "sonner";
 import { Mail, Lock, User, Building2 } from "lucide-react";
 import { termsApi } from "@/lib/api";
+import { useSignup } from "@/hooks/use-auth";
 
 const signupSchema = z.object({
   email: z.string().email("Invalid email address"),
@@ -27,8 +26,7 @@ const signupSchema = z.object({
 type SignupForm = z.infer<typeof signupSchema>;
 
 export default function SignupPage() {
-  const navigate = useNavigate();
-  const [isLoading, setIsLoading] = useState(false);
+  const signupMutation = useSignup();
   
   // Fetch current terms of service to get version_id
   const { data: terms } = useQuery({
@@ -49,36 +47,30 @@ export default function SignupPage() {
 
   const onSubmit = async (data: SignupForm) => {
     if (!data.acceptTerms) {
-      toast.error("You must accept the Terms of Service to continue.");
       return;
     }
 
-    setIsLoading(true);
-    try {
-      // TODO: Implement actual signup API call
-      // For now, simulate signup
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      
-      // Record terms acceptance after successful signup
-      if (terms?.version_id) {
-        try {
-          await termsApi.recordUserAgreement({
-            version_id: terms.version_id,
-            ip_address: undefined, // Could be captured from request headers on backend
-            user_agent: navigator.userAgent,
-          });
-        } catch (error) {
-          // Log error but don't block signup flow
-          console.error("Failed to record terms acceptance:", error);
-        }
+    signupMutation.mutate({
+      email: data.email,
+      password: data.password,
+      full_name: data.fullName,
+      company: data.company,
+      role: data.role,
+      accept_terms: data.acceptTerms,
+    });
+    
+    // Record terms acceptance after successful signup
+    if (terms?.version_id) {
+      try {
+        await termsApi.recordUserAgreement({
+          version_id: terms.version_id,
+          ip_address: undefined,
+          user_agent: navigator.userAgent,
+        });
+      } catch (error) {
+        // Log error but don't block signup flow
+        console.error("Failed to record terms acceptance:", error);
       }
-      
-      toast.success("Account created! Please check your email to verify.");
-      navigate("/verify-email");
-    } catch (error) {
-      toast.error("Signup failed. Please try again.");
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -200,8 +192,8 @@ export default function SignupPage() {
               <p className="text-sm text-red-500">{errors.acceptTerms.message}</p>
             )}
 
-            <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? "Creating account..." : "Create account"}
+            <Button type="submit" className="w-full" disabled={signupMutation.isPending}>
+              {signupMutation.isPending ? "Creating account..." : "Create account"}
             </Button>
           </form>
 

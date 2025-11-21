@@ -1,4 +1,5 @@
-import { Search, Bell, User } from "lucide-react";
+import { Search, Bell, LogOut, Settings, Monitor } from "lucide-react";
+import { Link } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import {
   DropdownMenu,
@@ -10,10 +11,16 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { useCurrentUser, useLogout } from "@/hooks/use-auth";
 
 export default function TopNav() {
-  // TODO: Get user from auth context
-  const user = { name: "John Doe", email: "john@example.com" };
+  const { data: user } = useCurrentUser();
+  const logout = useLogout();
+  
+  const displayName = user?.full_name || user?.email || "User";
+  const initials = user?.full_name
+    ? user.full_name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
+    : user?.email?.[0].toUpperCase() || 'U';
 
   return (
     <header className="h-16 border-b border-border bg-white flex items-center justify-between px-6">
@@ -42,25 +49,38 @@ export default function TopNav() {
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="flex items-center gap-2">
               <Avatar className="h-8 w-8">
-                <AvatarFallback>
-                  {user.name?.split(' ').map(n => n[0]).join('') || 'U'}
-                </AvatarFallback>
+                {user?.avatar_url ? (
+                  <img src={user.avatar_url} alt={displayName} />
+                ) : (
+                  <AvatarFallback>{initials}</AvatarFallback>
+                )}
               </Avatar>
-              <span className="hidden md:block text-sm font-medium">{user.name}</span>
+              <span className="hidden md:block text-sm font-medium">{displayName}</span>
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56">
-            <DropdownMenuLabel>My Account</DropdownMenuLabel>
+            <DropdownMenuLabel>
+              <div className="flex flex-col space-y-1">
+                <p className="text-sm font-medium leading-none">{displayName}</p>
+                <p className="text-xs leading-none text-muted-foreground">{user?.email}</p>
+              </div>
+            </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>
-              <User className="mr-2 h-4 w-4" />
-              <span>Profile</span>
+            <DropdownMenuItem asChild>
+              <Link to="/settings" className="flex items-center">
+                <Settings className="mr-2 h-4 w-4" />
+                <span>Settings</span>
+              </Link>
             </DropdownMenuItem>
-            <DropdownMenuItem>
-              <span>Settings</span>
+            <DropdownMenuItem asChild>
+              <Link to="/sessions" className="flex items-center">
+                <Monitor className="mr-2 h-4 w-4" />
+                <span>Sessions</span>
+              </Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>
+            <DropdownMenuItem onClick={() => logout.mutate()}>
+              <LogOut className="mr-2 h-4 w-4" />
               <span>Log out</span>
             </DropdownMenuItem>
           </DropdownMenuContent>

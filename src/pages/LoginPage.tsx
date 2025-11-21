@@ -1,5 +1,4 @@
-import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -7,8 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { toast } from "sonner";
 import { Mail, Lock, Chrome, Building2 } from "lucide-react";
+import { useLogin, useSSOProviders, useInitiateSSO } from "@/hooks/use-auth";
 
 const loginSchema = z.object({
   email: z.string().email("Invalid email address"),
@@ -18,8 +17,9 @@ const loginSchema = z.object({
 type LoginForm = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
-  const navigate = useNavigate();
-  const [isLoading, setIsLoading] = useState(false);
+  const loginMutation = useLogin();
+  const { data: ssoProviders } = useSSOProviders();
+  const initiateSSO = useInitiateSSO();
   
   const {
     register,
@@ -29,18 +29,15 @@ export default function LoginPage() {
     resolver: zodResolver(loginSchema),
   });
 
-  const onSubmit = async (_data: LoginForm) => {
-    setIsLoading(true);
-    try {
-      // TODO: Implement actual login API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      toast.success("Logged in successfully!");
-      navigate("/dashboard");
-    } catch (error) {
-      toast.error("Login failed. Please check your credentials.");
-    } finally {
-      setIsLoading(false);
-    }
+  const onSubmit = async (data: LoginForm) => {
+    loginMutation.mutate({
+      email: data.email,
+      password: data.password,
+    });
+  };
+
+  const handleSSO = (providerId: string) => {
+    initiateSSO.mutate({ providerId });
   };
 
   return (
@@ -96,30 +93,62 @@ export default function LoginPage() {
               )}
             </div>
 
-            <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? "Signing in..." : "Sign in"}
+            <Button type="submit" className="w-full" disabled={loginMutation.isPending}>
+              {loginMutation.isPending ? "Signing in..." : "Sign in"}
             </Button>
           </form>
 
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t border-border" />
-            </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-white px-2 text-foreground-secondary">Or continue with</span>
-            </div>
-          </div>
+          {(ssoProviders && ssoProviders.length > 0) && (
+            <>
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <span className="w-full border-t border-border" />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-white px-2 text-foreground-secondary">Or continue with</span>
+                </div>
+              </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <Button variant="outline" type="button" className="w-full">
-              <Chrome className="mr-2 h-4 w-4" />
-              Google
-            </Button>
-            <Button variant="outline" type="button" className="w-full">
-              <Building2 className="mr-2 h-4 w-4" />
-              SSO
-            </Button>
-          </div>
+              <div className="grid grid-cols-2 gap-4">
+                {ssoProviders.find(p => p.provider_name === 'google') && (
+                  <Button 
+                    variant="outline" 
+                    type="button" 
+                    className="w-full"
+                    onClick={() => handleSSO(ssoProviders.find(p => p.provider_name === 'google')!.provider_id)}
+                    disabled={initiateSSO.isPending}
+                  >
+                    <Chrome className="mr-2 h-4 w-4" />
+                    Google
+                  </Button>
+                )}
+                {ssoProviders.find(p => p.provider_name === 'microsoft') && (
+                  <Button 
+                    variant="outline" 
+                    type="button" 
+                    className="w-full"
+                    onClick={() => handleSSO(ssoProviders.find(p => p.provider_name === 'microsoft')!.provider_id)}
+                    disabled={initiateSSO.isPending}
+                  >
+                    <Building2 className="mr-2 h-4 w-4" />
+                    Microsoft
+                  </Button>
+                )}
+                {ssoProviders.find(p => p.provider_name === 'saml' || p.provider_name === 'oidc') && (
+                  <Button 
+                    variant="outline" 
+                    type="button" 
+                    className="w-full col-span-2"
+                    onClick={() => handleSSO(ssoProviders.find(p => p.provider_name === 'saml' || p.provider_name === 'oidc')!.provider_id)}
+                    disabled={initiateSSO.isPending}
+                  >
+                    <Building2 className="mr-2 h-4 w-4" />
+                    Enterprise SSO
+                  </Button>
+                )}
+              </div>
+            </>
+          )}
 
           <div className="text-center text-sm">
             <span className="text-foreground-secondary">Don't have an account? </span>

@@ -26,8 +26,17 @@ async function apiRequest<T>(
 
   if (!response.ok) {
     if (response.status === 401) {
+      // Clear auth data on unauthorized
       localStorage.removeItem('auth_token');
-      window.location.href = '/login';
+      localStorage.removeItem('refresh_token');
+      localStorage.removeItem('user');
+      // Only redirect if not already on auth pages
+      if (!window.location.pathname.includes('/login') && 
+          !window.location.pathname.includes('/signup') &&
+          !window.location.pathname.includes('/verify-email') &&
+          !window.location.pathname.includes('/reset-password')) {
+        window.location.href = '/login';
+      }
     }
     const error = await response.json().catch(() => ({ message: `API Error: ${response.status}` }));
     throw new Error(error.message || `API Error: ${response.status}`);
@@ -35,6 +44,44 @@ async function apiRequest<T>(
 
   return response.json();
 }
+
+// Token management utilities
+export const tokenManager = {
+  setTokens: (accessToken: string, refreshToken?: string) => {
+    localStorage.setItem('auth_token', accessToken);
+    if (refreshToken) {
+      localStorage.setItem('refresh_token', refreshToken);
+    }
+  },
+  
+  getAccessToken: (): string | null => {
+    return localStorage.getItem('auth_token');
+  },
+  
+  getRefreshToken: (): string | null => {
+    return localStorage.getItem('refresh_token');
+  },
+  
+  clearTokens: () => {
+    localStorage.removeItem('auth_token');
+    localStorage.removeItem('refresh_token');
+    localStorage.removeItem('user');
+  },
+  
+  setUser: (user: import("@/types").User) => {
+    localStorage.setItem('user', JSON.stringify(user));
+  },
+  
+  getUser: (): import("@/types").User | null => {
+    const userStr = localStorage.getItem('user');
+    if (!userStr) return null;
+    try {
+      return JSON.parse(userStr);
+    } catch {
+      return null;
+    }
+  },
+};
 
 // API utilities
 export const api = {
@@ -261,4 +308,66 @@ export const errorReportApi = {
     url?: string;
   }): Promise<import("@/types").ErrorReport> =>
     api.post<import("@/types").ErrorReport>('/errors/report', data),
+};
+
+// Authentication API functions
+export const authApi = {
+  login: (credentials: import("@/types").LoginCredentials): Promise<import("@/types").AuthResponse> => {
+    return api.post<import("@/types").AuthResponse>('/auth/login', credentials);
+  },
+  
+  signup: (data: import("@/types").SignupData): Promise<{ message: string; user_id: string }> => {
+    return api.post<{ message: string; user_id: string }>('/auth/signup', data);
+  },
+  
+  logout: (): Promise<{ message: string }> => {
+    return api.post<{ message: string }>('/auth/logout', {});
+  },
+  
+  refreshToken: (refreshToken: string): Promise<import("@/types").AuthResponse> => {
+    return api.post<import("@/types").AuthResponse>('/auth/refresh', { refresh_token: refreshToken });
+  },
+  
+  getCurrentUser: (): Promise<import("@/types").User> => {
+    return api.get<import("@/types").User>('/auth/me');
+  },
+  
+  verifyEmail: (token: string): Promise<import("@/types").EmailVerificationResponse> => {
+    return api.post<import("@/types").EmailVerificationResponse>('/auth/verify-email', { token });
+  },
+  
+  resendVerificationEmail: (email?: string): Promise<{ message: string }> => {
+    return api.post<{ message: string }>('/auth/resend-verification', email ? { email } : {});
+  },
+  
+  requestPasswordReset: (data: import("@/types").PasswordResetRequest): Promise<{ message: string }> => {
+    return api.post<{ message: string }>('/auth/request-password-reset', data);
+  },
+  
+  resetPassword: (data: import("@/types").PasswordResetConfirm): Promise<{ message: string }> => {
+    return api.post<{ message: string }>('/auth/reset-password', data);
+  },
+  
+  getSessions: (): Promise<import("@/types").Session[]> => {
+    return api.get<import("@/types").Session[]>('/auth/sessions');
+  },
+  
+  revokeSession: (sessionId: string): Promise<{ message: string }> => {
+    return api.delete<{ message: string }>(`/auth/sessions/${sessionId}`);
+  },
+  
+  revokeAllSessions: (): Promise<{ message: string }> => {
+    return api.post<{ message: string }>('/auth/sessions/revoke-all', {});
+  },
+  
+  getSSOProviders: (): Promise<import("@/types").SSOProvider[]> => {
+    return api.get<import("@/types").SSOProvider[]>('/auth/sso/providers');
+  },
+  
+  initiateSSO: (providerId: string, redirectUrl?: string): Promise<{ auth_url: string }> => {
+    return api.post<{ auth_url: string }>('/auth/sso/initiate', { 
+      provider_id: providerId,
+      redirect_url: redirectUrl || window.location.origin + '/auth/sso/callback'
+    });
+  },
 };

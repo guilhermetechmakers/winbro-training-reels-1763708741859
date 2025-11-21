@@ -1,28 +1,30 @@
-import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useEffect } from "react";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { toast } from "sonner";
 import { Mail, CheckCircle2 } from "lucide-react";
+import { useVerifyEmail, useResendVerification } from "@/hooks/use-auth";
 
 export default function EmailVerificationPage() {
   const navigate = useNavigate();
-  const [isResending, setIsResending] = useState(false);
-  // TODO: Get verification status from URL params or API
-  const isVerified = false;
+  const [searchParams] = useSearchParams();
+  const token = searchParams.get("token");
+  const verifyMutation = useVerifyEmail();
+  const resendMutation = useResendVerification();
 
-  const handleResend = async () => {
-    setIsResending(true);
-    try {
-      // TODO: Implement resend verification email API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      toast.success("Verification email sent!");
-    } catch (error) {
-      toast.error("Failed to send verification email. Please try again.");
-    } finally {
-      setIsResending(false);
+  // Auto-verify if token is present
+  useEffect(() => {
+    if (token && !verifyMutation.isPending && !verifyMutation.isSuccess) {
+      verifyMutation.mutate(token);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token]);
+
+  const handleResend = () => {
+    resendMutation.mutate(undefined);
   };
+
+  const isVerified = verifyMutation.isSuccess && verifyMutation.data?.verified;
 
   if (isVerified) {
     return (
@@ -67,11 +69,11 @@ export default function EmailVerificationPage() {
           
           <Button
             onClick={handleResend}
-            disabled={isResending}
+            disabled={resendMutation.isPending}
             variant="outline"
             className="w-full"
           >
-            {isResending ? "Sending..." : "Resend verification email"}
+            {resendMutation.isPending ? "Sending..." : "Resend verification email"}
           </Button>
 
           <div className="text-center">

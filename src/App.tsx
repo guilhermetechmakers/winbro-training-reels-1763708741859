@@ -27,6 +27,8 @@ import CookiePolicyPage from "@/pages/CookiePolicyPage";
 import NotFoundPage from "@/pages/NotFoundPage";
 import ErrorPage from "@/pages/ErrorPage";
 import DashboardLayout from "@/components/layout/DashboardLayout";
+import ProtectedRoute from "@/components/auth/ProtectedRoute";
+import SessionManagementPage from "@/pages/SessionManagementPage";
 
 // React Query client with optimal defaults
 const queryClient = new QueryClient({
@@ -55,22 +57,128 @@ export default function App() {
           <Route path="/terms" element={<TermsOfServicePage />} />
           <Route path="/cookies" element={<CookiePolicyPage />} />
           
-          {/* Dashboard routes with layout */}
+          {/* Dashboard routes with layout and protection */}
           <Route element={<DashboardLayout />}>
-            <Route path="/dashboard" element={<UserDashboard />} />
-            <Route path="/library" element={<ContentLibrary />} />
-            <Route path="/reel/:id" element={<VideoPlayerPage />} />
-            <Route path="/upload" element={<UploadReelPage />} />
-            <Route path="/reel/:id/edit" element={<EditReelPage />} />
-            <Route path="/courses" element={<CourseBuilderPage />} />
-            <Route path="/course/:courseId/quiz" element={<QuizPage />} />
-            <Route path="/checkout" element={<CheckoutPage />} />
-            <Route path="/transactions" element={<TransactionHistoryPage />} />
-            <Route path="/admin" element={<AdminDashboard />} />
-            <Route path="/admin/users" element={<AdminUserManagement />} />
-            <Route path="/analytics" element={<AnalyticsPage />} />
-            <Route path="/settings" element={<SettingsPage />} />
-            <Route path="/help" element={<HelpPage />} />
+            <Route 
+              path="/dashboard" 
+              element={
+                <ProtectedRoute>
+                  <UserDashboard />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/library" 
+              element={
+                <ProtectedRoute>
+                  <ContentLibrary />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/reel/:id" 
+              element={
+                <ProtectedRoute>
+                  <VideoPlayerPage />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/upload" 
+              element={
+                <ProtectedRoute>
+                  <UploadReelPage />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/reel/:id/edit" 
+              element={
+                <ProtectedRoute>
+                  <EditReelPage />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/courses" 
+              element={
+                <ProtectedRoute>
+                  <CourseBuilderPage />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/course/:courseId/quiz" 
+              element={
+                <ProtectedRoute>
+                  <QuizPage />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/checkout" 
+              element={
+                <ProtectedRoute>
+                  <CheckoutPage />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/transactions" 
+              element={
+                <ProtectedRoute>
+                  <TransactionHistoryPage />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/admin" 
+              element={
+                <ProtectedRoute allowedRoles={['admin']}>
+                  <AdminDashboard />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/admin/users" 
+              element={
+                <ProtectedRoute allowedRoles={['admin']}>
+                  <AdminUserManagement />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/analytics" 
+              element={
+                <ProtectedRoute>
+                  <AnalyticsPage />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/settings" 
+              element={
+                <ProtectedRoute>
+                  <SettingsPage />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/sessions" 
+              element={
+                <ProtectedRoute>
+                  <SessionManagementPage />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/help" 
+              element={
+                <ProtectedRoute>
+                  <HelpPage />
+                </ProtectedRoute>
+              } 
+            />
           </Route>
           
           {/* Error pages */}

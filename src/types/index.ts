@@ -10,6 +10,60 @@ export interface User {
   updated_at: string;
 }
 
+// Authentication types
+export interface AuthResponse {
+  user: User;
+  access_token: string;
+  refresh_token?: string;
+  expires_in: number;
+}
+
+export interface LoginCredentials {
+  email: string;
+  password: string;
+}
+
+export interface SignupData {
+  email: string;
+  password: string;
+  full_name: string;
+  company: string;
+  role: 'trainer' | 'operator' | 'customer_admin';
+  accept_terms: boolean;
+}
+
+export interface Session {
+  session_id: string;
+  user_id: string;
+  device_info: string;
+  ip_address?: string;
+  login_time: string;
+  last_access_time: string;
+  is_current: boolean;
+}
+
+export interface SSOProvider {
+  provider_id: string;
+  provider_name: 'google' | 'microsoft' | 'saml' | 'oidc';
+  display_name: string;
+  auth_url: string;
+}
+
+export interface EmailVerificationResponse {
+  verified: boolean;
+  message: string;
+}
+
+export interface PasswordResetRequest {
+  email: string;
+}
+
+export interface PasswordResetConfirm {
+  token: string;
+  password: string;
+  confirm_password: string;
+}
+
 export interface Reel {
   id: string;
   title: string;

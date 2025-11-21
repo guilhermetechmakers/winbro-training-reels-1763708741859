@@ -8,7 +8,8 @@ import {
   BarChart3,
   Users,
   Shield,
-  Receipt
+  Receipt,
+  Monitor
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -19,6 +20,7 @@ const navigation = [
   { name: "Courses", href: "/courses", icon: BookOpen },
   { name: "Analytics", href: "/analytics", icon: BarChart3 },
   { name: "Transactions", href: "/transactions", icon: Receipt },
+  { name: "Sessions", href: "/sessions", icon: Monitor },
   { name: "Settings", href: "/settings", icon: Settings },
 ];
 

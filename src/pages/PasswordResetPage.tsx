@@ -6,9 +6,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { toast } from "sonner";
 import { Mail, Lock, CheckCircle2 } from "lucide-react";
 import { Link, useSearchParams } from "react-router-dom";
+import { useRequestPasswordReset, useResetPassword } from "@/hooks/use-auth";
 
 const requestResetSchema = z.object({
   email: z.string().email("Invalid email address"),
@@ -29,7 +29,8 @@ export default function PasswordResetPage() {
   const [searchParams] = useSearchParams();
   const token = searchParams.get("token");
   const [isRequested, setIsRequested] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const requestResetMutation = useRequestPasswordReset();
+  const resetPasswordMutation = useResetPassword();
 
   if (token) {
     // Reset password form
@@ -41,21 +42,19 @@ export default function PasswordResetPage() {
       resolver: zodResolver(resetPasswordSchema),
     });
 
-    const onSubmit = async (_data: ResetPasswordForm) => {
-      setIsLoading(true);
-      try {
-        // TODO: Implement reset password API call
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-        toast.success("Password reset successfully!");
-        setIsRequested(true);
-      } catch (error) {
-        toast.error("Failed to reset password. Please try again.");
-      } finally {
-        setIsLoading(false);
-      }
+    const onSubmit = async (data: ResetPasswordForm) => {
+      resetPasswordMutation.mutate({
+        token,
+        password: data.password,
+        confirm_password: data.confirmPassword,
+      }, {
+        onSuccess: () => {
+          setIsRequested(true);
+        },
+      });
     };
 
-    if (isRequested) {
+    if (isRequested || resetPasswordMutation.isSuccess) {
       return (
         <div className="min-h-screen bg-background-primary flex items-center justify-center p-4">
           <Card className="w-full max-w-md animate-fade-in-up">
@@ -123,8 +122,8 @@ export default function PasswordResetPage() {
                 )}
               </div>
 
-              <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? "Resetting..." : "Reset password"}
+              <Button type="submit" className="w-full" disabled={resetPasswordMutation.isPending}>
+                {resetPasswordMutation.isPending ? "Resetting..." : "Reset password"}
               </Button>
             </form>
           </CardContent>
@@ -142,18 +141,12 @@ export default function PasswordResetPage() {
     resolver: zodResolver(requestResetSchema),
   });
 
-  const onSubmit = async (_data: RequestResetForm) => {
-    setIsLoading(true);
-    try {
-      // TODO: Implement request reset API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      toast.success("Password reset email sent!");
-      setIsRequested(true);
-    } catch (error) {
-      toast.error("Failed to send reset email. Please try again.");
-    } finally {
-      setIsLoading(false);
-    }
+  const onSubmit = async (data: RequestResetForm) => {
+    requestResetMutation.mutate({ email: data.email }, {
+      onSuccess: () => {
+        setIsRequested(true);
+      },
+    });
   };
 
   if (isRequested) {
@@ -209,8 +202,8 @@ export default function PasswordResetPage() {
               )}
             </div>
 
-            <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? "Sending..." : "Send reset link"}
+            <Button type="submit" className="w-full" disabled={requestResetMutation.isPending}>
+              {requestResetMutation.isPending ? "Sending..." : "Send reset link"}
             </Button>
           </form>
 
