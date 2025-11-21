@@ -16,8 +16,10 @@ import CourseBuilderPage from "@/pages/CourseBuilderPage";
 import QuizPage from "@/pages/QuizPage";
 import CheckoutPage from "@/pages/CheckoutPage";
 import TransactionHistoryPage from "@/pages/TransactionHistoryPage";
+import SubscriptionPlansPage from "@/pages/SubscriptionPlansPage";
 import AdminDashboard from "@/pages/AdminDashboard";
 import AdminUserManagement from "@/pages/AdminUserManagement";
+import AdminSubscriptionManagement from "@/pages/AdminSubscriptionManagement";
 import AnalyticsPage from "@/pages/AnalyticsPage";
 import SettingsPage from "@/pages/SettingsPage";
 import HelpPage from "@/pages/HelpPage";
@@ -126,6 +128,14 @@ export default function App() {
               } 
             />
             <Route 
+              path="/subscriptions" 
+              element={
+                <ProtectedRoute>
+                  <SubscriptionPlansPage />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
               path="/checkout" 
               element={
                 <ProtectedRoute>
@@ -154,6 +164,14 @@ export default function App() {
               element={
                 <ProtectedRoute allowedRoles={['admin']}>
                   <AdminUserManagement />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/admin/subscriptions" 
+              element={
+                <ProtectedRoute allowedRoles={['admin']}>
+                  <AdminSubscriptionManagement />
                 </ProtectedRoute>
               } 
             />

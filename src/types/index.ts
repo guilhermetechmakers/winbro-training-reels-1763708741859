@@ -291,6 +291,22 @@ export interface SubscriptionPlan {
   is_popular?: boolean;
 }
 
+export interface Subscription {
+  id: string;
+  user_id: string;
+  plan_id: string;
+  status: 'active' | 'cancelled' | 'expired' | 'pending' | 'past_due';
+  start_date: string;
+  end_date?: string;
+  current_period_start: string;
+  current_period_end: string;
+  cancel_at_period_end: boolean;
+  cancelled_at?: string;
+  plan?: SubscriptionPlan;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface PromoCode {
   id: string;
   code: string;

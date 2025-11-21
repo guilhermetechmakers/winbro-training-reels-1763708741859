@@ -190,6 +190,31 @@ export const checkoutApi = {
     api.post<import("@/types").CheckoutResponse>('/checkout/process', data),
 };
 
+// Subscription management API functions
+export const subscriptionsApi = {
+  getSubscriptions: (filters?: { user_id?: string; status?: string }): Promise<import("@/types").Subscription[]> => {
+    const params = new URLSearchParams();
+    if (filters?.user_id) params.append('user_id', filters.user_id);
+    if (filters?.status) params.append('status', filters.status);
+    const query = params.toString();
+    return api.get<import("@/types").Subscription[]>(`/subscriptions${query ? `?${query}` : ''}`);
+  },
+  getSubscription: (id: string): Promise<import("@/types").Subscription> => 
+    api.get<import("@/types").Subscription>(`/subscriptions/${id}`),
+  getCurrentSubscription: (): Promise<import("@/types").Subscription | null> => 
+    api.get<import("@/types").Subscription | null>('/subscriptions/current'),
+  updateSubscription: (id: string, data: { plan_id?: string; status?: string }): Promise<import("@/types").Subscription> => 
+    api.patch<import("@/types").Subscription>(`/subscriptions/${id}`, data),
+  cancelSubscription: (id: string, data?: { reason?: string; feedback?: string }): Promise<import("@/types").Subscription> => 
+    api.post<import("@/types").Subscription>(`/subscriptions/${id}/cancel`, data || {}),
+  resumeSubscription: (id: string): Promise<import("@/types").Subscription> => 
+    api.post<import("@/types").Subscription>(`/subscriptions/${id}/resume`, {}),
+  upgradeSubscription: (id: string, newPlanId: string): Promise<import("@/types").Subscription> => 
+    api.post<import("@/types").Subscription>(`/subscriptions/${id}/upgrade`, { plan_id: newPlanId }),
+  downgradeSubscription: (id: string, newPlanId: string): Promise<import("@/types").Subscription> => 
+    api.post<import("@/types").Subscription>(`/subscriptions/${id}/downgrade`, { plan_id: newPlanId }),
+};
+
 // Help & Support API functions
 export const helpApi = {
   searchFAQs: (query: string): Promise<import("@/types").FAQ[]> => {

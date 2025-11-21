@@ -9,7 +9,8 @@ import {
   Users,
   Shield,
   Receipt,
-  Monitor
+  Monitor,
+  CreditCard
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -19,6 +20,7 @@ const navigation = [
   { name: "Upload Reel", href: "/upload", icon: Upload },
   { name: "Courses", href: "/courses", icon: BookOpen },
   { name: "Analytics", href: "/analytics", icon: BarChart3 },
+  { name: "Subscriptions", href: "/subscriptions", icon: CreditCard },
   { name: "Transactions", href: "/transactions", icon: Receipt },
   { name: "Sessions", href: "/sessions", icon: Monitor },
   { name: "Settings", href: "/settings", icon: Settings },
@@ -27,6 +29,7 @@ const navigation = [
 const adminNavigation = [
   { name: "Admin Dashboard", href: "/admin", icon: Shield },
   { name: "User Management", href: "/admin/users", icon: Users },
+  { name: "Subscriptions", href: "/admin/subscriptions", icon: CreditCard },
 ];
 
 export default function Sidebar() {
