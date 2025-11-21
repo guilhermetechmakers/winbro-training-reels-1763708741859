@@ -412,3 +412,96 @@ export const twoFactorApi = {
     return api.get<import("@/types").AuthAttempt[]>(`/auth/2fa/attempts${query ? `?${query}` : ''}`);
   },
 };
+
+// Video Upload & Processing API functions
+export const videoUploadApi = {
+  // Initialize resumable upload
+  initUpload: (file: File, metadata: Partial<import("@/types").VideoMetadata>): Promise<import("@/types").UploadInitResponse> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('file_name', file.name);
+    formData.append('file_size', file.size.toString());
+    formData.append('file_type', file.type);
+    if (metadata.title) formData.append('title', metadata.title);
+    if (metadata.description) formData.append('description', metadata.description);
+    if (metadata.auto_transcribe !== undefined) formData.append('auto_transcribe', metadata.auto_transcribe.toString());
+    if (metadata.language) formData.append('language', metadata.language);
+    
+    const url = `${import.meta.env.VITE_API_URL || 'http://localhost:3000/api'}/videos/upload/init`;
+    const token = localStorage.getItem('auth_token');
+    
+    return fetch(url, {
+      method: 'POST',
+      headers: {
+        Authorization: token ? `Bearer ${token}` : '',
+      },
+      body: formData,
+    }).then(async (response) => {
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ message: `API Error: ${response.status}` }));
+        throw new Error(error.message || `API Error: ${response.status}`);
+      }
+      return response.json();
+    });
+  },
+
+  // Upload chunk (resumable)
+  uploadChunk: async (
+    uploadId: string,
+    chunk: Blob,
+    chunkNumber: number,
+    totalChunks: number,
+    uploadedBytes: number
+  ): Promise<import("@/types").UploadChunkResponse> => {
+    const formData = new FormData();
+    formData.append('chunk', chunk);
+    formData.append('chunk_number', chunkNumber.toString());
+    formData.append('total_chunks', totalChunks.toString());
+    formData.append('uploaded_bytes', uploadedBytes.toString());
+
+    const url = `${import.meta.env.VITE_API_URL || 'http://localhost:3000/api'}/videos/upload/${uploadId}/chunk`;
+    const token = localStorage.getItem('auth_token');
+    
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        Authorization: token ? `Bearer ${token}` : '',
+      },
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ message: `API Error: ${response.status}` }));
+      throw new Error(error.message || `API Error: ${response.status}`);
+    }
+
+    return response.json();
+  },
+
+  // Get upload status
+  getUploadStatus: (uploadId: string): Promise<import("@/types").VideoUpload> =>
+    api.get<import("@/types").VideoUpload>(`/videos/upload/${uploadId}/status`),
+
+  // Resume upload
+  resumeUpload: (uploadId: string): Promise<import("@/types").VideoUpload> =>
+    api.post<import("@/types").VideoUpload>(`/videos/upload/${uploadId}/resume`, {}),
+
+  // Complete upload and start processing
+  completeUpload: (
+    uploadId: string,
+    metadata: import("@/types").VideoMetadata
+  ): Promise<import("@/types").VideoProcessingJob> =>
+    api.post<import("@/types").VideoProcessingJob>(`/videos/upload/${uploadId}/complete`, metadata),
+
+  // Get processing status
+  getProcessingStatus: (jobId: string): Promise<import("@/types").ProcessingStatusResponse> =>
+    api.get<import("@/types").ProcessingStatusResponse>(`/videos/processing/${jobId}/status`),
+
+  // Get user's processing queue
+  getProcessingQueue: (): Promise<import("@/types").VideoProcessingJob[]> =>
+    api.get<import("@/types").VideoProcessingJob[]>('/videos/processing/queue'),
+
+  // Cancel processing job
+  cancelProcessing: (jobId: string): Promise<{ message: string }> =>
+    api.post<{ message: string }>(`/videos/processing/${jobId}/cancel`, {}),
+};

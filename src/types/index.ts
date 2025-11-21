@@ -534,3 +534,67 @@ export interface LoginWith2FAResponse {
   auth_response?: AuthResponse;
   message?: string;
 }
+
+// Video Upload & Processing types
+export interface VideoUpload {
+  upload_id: string;
+  user_id: string;
+  file_name: string;
+  file_size: number;
+  file_type: string;
+  upload_status: 'pending' | 'uploading' | 'uploaded' | 'processing' | 'completed' | 'failed';
+  upload_progress: number; // 0-100
+  uploaded_bytes: number;
+  total_bytes: number;
+  upload_url?: string;
+  resume_url?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface VideoProcessingJob {
+  job_id: string;
+  upload_id: string;
+  reel_id?: string;
+  status: 'pending' | 'scanning' | 'transcoding' | 'transcribing' | 'generating_thumbnails' | 'completed' | 'failed';
+  progress: number; // 0-100
+  current_step?: string;
+  error_message?: string;
+  virus_scan_status?: 'pending' | 'scanning' | 'clean' | 'infected';
+  transcoding_status?: 'pending' | 'processing' | 'completed' | 'failed';
+  transcription_status?: 'pending' | 'processing' | 'completed' | 'failed';
+  thumbnail_status?: 'pending' | 'processing' | 'completed' | 'failed';
+  created_at: string;
+  updated_at: string;
+}
+
+export interface UploadInitResponse {
+  upload_id: string;
+  upload_url: string;
+  chunk_size: number;
+  resume_url: string;
+}
+
+export interface UploadChunkResponse {
+  uploaded_bytes: number;
+  upload_progress: number;
+  is_complete: boolean;
+}
+
+export interface ProcessingStatusResponse {
+  job: VideoProcessingJob;
+  video?: Reel;
+}
+
+export interface VideoMetadata {
+  title: string;
+  description: string;
+  machine_model?: string;
+  tooling?: string;
+  process_step?: string;
+  tags?: string[];
+  skill_level: 'beginner' | 'intermediate' | 'advanced';
+  language: string;
+  auto_transcribe: boolean;
+  customer_scope?: string;
+}
