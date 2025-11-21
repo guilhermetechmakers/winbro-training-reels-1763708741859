@@ -325,3 +325,31 @@ export interface OnboardingChecklistItem {
   completed: boolean;
   order: number;
 }
+
+// Privacy & Data Subject Request types
+export interface DataSubjectRequest {
+  request_id: string;
+  user_id: string;
+  request_type: 'access' | 'correction' | 'deletion';
+  request_status: 'pending' | 'in_progress' | 'completed' | 'rejected';
+  request_date: string;
+  completion_date?: string;
+  description?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PrivacyPolicySection {
+  section_id: string;
+  section_title: string;
+  content: string;
+  order: number;
+  last_updated: string;
+}
+
+export interface PrivacyPolicy {
+  policy_id: string;
+  sections: PrivacyPolicySection[];
+  last_updated: string;
+  version: string;
+}

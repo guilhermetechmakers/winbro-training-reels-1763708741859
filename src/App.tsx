@@ -21,6 +21,7 @@ import AdminUserManagement from "@/pages/AdminUserManagement";
 import AnalyticsPage from "@/pages/AnalyticsPage";
 import SettingsPage from "@/pages/SettingsPage";
 import HelpPage from "@/pages/HelpPage";
+import PrivacyPolicyPage from "@/pages/PrivacyPolicyPage";
 import NotFoundPage from "@/pages/NotFoundPage";
 import ErrorPage from "@/pages/ErrorPage";
 import DashboardLayout from "@/components/layout/DashboardLayout";
@@ -48,6 +49,7 @@ export default function App() {
           <Route path="/signup" element={<SignupPage />} />
           <Route path="/verify-email" element={<EmailVerificationPage />} />
           <Route path="/reset-password" element={<PasswordResetPage />} />
+          <Route path="/privacy" element={<PrivacyPolicyPage />} />
           
           {/* Dashboard routes with layout */}
           <Route element={<DashboardLayout />}>

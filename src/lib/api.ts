@@ -210,3 +210,17 @@ export const helpApi = {
     return api.get<import("@/types").ReleaseNote[]>(`/help/releases${query ? `?${query}` : ''}`);
   },
 };
+
+// Privacy & Data Subject Request API functions
+export const privacyApi = {
+  getPrivacyPolicy: (): Promise<import("@/types").PrivacyPolicy> =>
+    api.get<import("@/types").PrivacyPolicy>('/privacy/policy'),
+  submitDataRequest: (data: { request_type: 'access' | 'correction' | 'deletion'; description?: string }): Promise<import("@/types").DataSubjectRequest> =>
+    api.post<import("@/types").DataSubjectRequest>('/privacy/data-requests', data),
+  getDataRequests: (): Promise<import("@/types").DataSubjectRequest[]> =>
+    api.get<import("@/types").DataSubjectRequest[]>('/privacy/data-requests'),
+  getDataRequest: (requestId: string): Promise<import("@/types").DataSubjectRequest> =>
+    api.get<import("@/types").DataSubjectRequest>(`/privacy/data-requests/${requestId}`),
+  sendPrivacyInquiry: (data: { name: string; email: string; message: string }): Promise<{ success: boolean; message: string }> =>
+    api.post<{ success: boolean; message: string }>('/privacy/inquiry', data),
+};
