@@ -234,3 +234,18 @@ export const termsApi = {
   getUserAgreements: (): Promise<import("@/types").UserAgreement[]> =>
     api.get<import("@/types").UserAgreement[]>('/terms/agreements'),
 };
+
+// Cookie Preferences API functions
+export const cookieApi = {
+  getCookiePreferences: (): Promise<import("@/types").CookiePreferences> =>
+    api.get<import("@/types").CookiePreferences>('/cookies/preferences'),
+  updateCookiePreferences: (data: {
+    essential_cookies: boolean;
+    performance_cookies: boolean;
+    functional_cookies: boolean;
+    targeting_cookies: boolean;
+  }): Promise<import("@/types").CookiePreferences> =>
+    api.put<import("@/types").CookiePreferences>('/cookies/preferences', data),
+  getCookieCategories: (): Promise<import("@/types").CookieCategory[]> =>
+    api.get<import("@/types").CookieCategory[]>('/cookies/categories'),
+};

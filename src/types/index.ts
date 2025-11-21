@@ -382,3 +382,22 @@ export interface UserAgreement {
   user_agent?: string;
   created_at: string;
 }
+
+// Cookie Preferences types
+export interface CookiePreferences {
+  user_id: string;
+  essential_cookies: boolean;
+  performance_cookies: boolean;
+  functional_cookies: boolean;
+  targeting_cookies: boolean;
+  consent_date: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CookieCategory {
+  id: 'essential' | 'performance' | 'functional' | 'targeting';
+  name: string;
+  description: string;
+  required: boolean;
+}

@@ -23,6 +23,7 @@ import SettingsPage from "@/pages/SettingsPage";
 import HelpPage from "@/pages/HelpPage";
 import PrivacyPolicyPage from "@/pages/PrivacyPolicyPage";
 import TermsOfServicePage from "@/pages/TermsOfServicePage";
+import CookiePolicyPage from "@/pages/CookiePolicyPage";
 import NotFoundPage from "@/pages/NotFoundPage";
 import ErrorPage from "@/pages/ErrorPage";
 import DashboardLayout from "@/components/layout/DashboardLayout";
@@ -52,6 +53,7 @@ export default function App() {
           <Route path="/reset-password" element={<PasswordResetPage />} />
           <Route path="/privacy" element={<PrivacyPolicyPage />} />
           <Route path="/terms" element={<TermsOfServicePage />} />
+          <Route path="/cookies" element={<CookiePolicyPage />} />
           
           {/* Dashboard routes with layout */}
           <Route element={<DashboardLayout />}>
