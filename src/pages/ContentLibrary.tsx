@@ -1,0 +1,146 @@
+import { useState } from "react";
+import { Link } from "react-router-dom";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Search, Filter, Grid, List, Clock } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { api } from "@/lib/api";
+import type { Reel } from "@/types";
+
+export default function ContentLibrary() {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+
+  const { data: reels, isLoading } = useQuery({
+    queryKey: ["reels", searchQuery],
+    queryFn: () => api.get<Reel[]>(`/reels?search=${searchQuery}`),
+  });
+
+  return (
+    <div className="space-y-6 animate-fade-in-up">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-foreground-primary">Content Library</h1>
+          <p className="text-foreground-secondary mt-1">
+            Browse and search all training reels
+          </p>
+        </div>
+        <Link to="/upload">
+          <Button>Upload Reel</Button>
+        </Link>
+      </div>
+
+      {/* Search and Filters */}
+      <Card>
+        <CardContent className="p-4">
+          <div className="flex flex-col md:flex-row gap-4">
+            <div className="flex-1 relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-foreground-secondary" />
+              <Input
+                type="search"
+                placeholder="Search reels, transcripts, tags..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+            <Button variant="outline">
+              <Filter className="mr-2 h-4 w-4" />
+              Filters
+            </Button>
+            <div className="flex gap-2">
+              <Button
+                variant={viewMode === "grid" ? "default" : "outline"}
+                size="icon"
+                onClick={() => setViewMode("grid")}
+              >
+                <Grid className="h-4 w-4" />
+              </Button>
+              <Button
+                variant={viewMode === "list" ? "default" : "outline"}
+                size="icon"
+                onClick={() => setViewMode("list")}
+              >
+                <List className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Results */}
+      {isLoading ? (
+        <div className={viewMode === "grid" ? "grid md:grid-cols-3 lg:grid-cols-4 gap-4" : "space-y-4"}>
+          {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+            <Card key={i} className="animate-pulse">
+              <CardContent className="p-4">
+                <div className="aspect-video bg-muted rounded mb-4"></div>
+                <div className="h-4 bg-muted rounded w-3/4 mb-2"></div>
+                <div className="h-3 bg-muted rounded w-1/2"></div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      ) : reels && reels.length > 0 ? (
+        <div className={viewMode === "grid" ? "grid md:grid-cols-3 lg:grid-cols-4 gap-4" : "space-y-4"}>
+          {reels.map((reel) => (
+            <Link key={reel.id} to={`/reel/${reel.id}`}>
+              <Card className="card-base card-hover">
+                <div className="aspect-video bg-muted rounded-t-lg flex items-center justify-center">
+                  {reel.thumbnail_url ? (
+                    <img src={reel.thumbnail_url} alt={reel.title} className="w-full h-full object-cover rounded-t-lg" />
+                  ) : (
+                    <Clock className="h-8 w-8 text-foreground-secondary" />
+                  )}
+                </div>
+                <CardHeader>
+                  <div className="flex items-start justify-between mb-2">
+                    <Badge className={reel.status === "published" ? "badge-published" : "badge-archived"}>
+                      {reel.status.toUpperCase()}
+                    </Badge>
+                  </div>
+                  <CardTitle className="text-lg line-clamp-2">{reel.title}</CardTitle>
+                  <CardDescription className="line-clamp-2">{reel.description}</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center gap-4 text-sm text-foreground-secondary">
+                    <span className="flex items-center gap-1">
+                      <Clock className="h-4 w-4" />
+                      {Math.floor(reel.duration / 60)}:{(reel.duration % 60).toString().padStart(2, '0')}
+                    </span>
+                    {reel.machine_model && (
+                      <Badge variant="outline" className="text-xs">
+                        {reel.machine_model}
+                      </Badge>
+                    )}
+                  </div>
+                  {reel.tags.length > 0 && (
+                    <div className="flex flex-wrap gap-1 mt-2">
+                      {reel.tags.slice(0, 3).map((tag) => (
+                        <Badge key={tag} variant="secondary" className="text-xs">
+                          {tag}
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </Link>
+          ))}
+        </div>
+      ) : (
+        <Card>
+          <CardContent className="py-12 text-center">
+            <p className="text-foreground-secondary mb-4">No reels found</p>
+            <Link to="/upload">
+              <Button>Upload Your First Reel</Button>
+            </Link>
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  );
+}
